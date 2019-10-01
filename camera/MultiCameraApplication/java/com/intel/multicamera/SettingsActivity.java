@@ -107,7 +107,7 @@ public class SettingsActivity extends AppCompatActivity {
         public static SparseArray<SelectedVideoQualities> sCachedSelectedVideoQualities =
             new SparseArray<SelectedVideoQualities>(3);
         private static String mPrefChangedKey = null;
-        static boolean isPrefChangedKeyChnaged = false;
+        static boolean isPrefChangedKeyChanged = false;
         /** The selected {@link CamcorderProfile} qualities. */
         public static class SelectedVideoQualities {
             public int large = -1;
@@ -150,7 +150,7 @@ public class SettingsActivity extends AppCompatActivity {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
             mCamcorderProfileNames = getResources().getStringArray(R.array.camcorder_profile_names);
 
-            isPrefChangedKeyChnaged = false;
+            isPrefChangedKeyChanged = false;
         }
 
         @Override
@@ -193,12 +193,11 @@ public class SettingsActivity extends AppCompatActivity {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String Key) {
             setSummary(findPreference(Key));
             mPrefChangedKey = Key;
-            isPrefChangedKeyChnaged = true;
+            isPrefChangedKeyChanged = true;
         }
 
         public static String getchangedPrefKey() {
-            if (isPrefChangedKeyChnaged == true) {
-                isPrefChangedKeyChnaged = false;
+            if (isPrefChangedKeyChanged == true) {
                 return mPrefChangedKey;
             } else {
                 return DEFAULT_KEY;

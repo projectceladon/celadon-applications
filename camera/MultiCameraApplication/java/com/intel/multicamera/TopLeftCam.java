@@ -1,4 +1,5 @@
 /*
+ * Copyright 2014 The Android Open Source Project
  * Copyright (c) 2019 Intel Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +23,8 @@ import android.app.Activity;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.*;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -71,14 +74,15 @@ public class TopLeftCam {
     protected CameraCaptureSession cameraCaptureSessions;
     protected CaptureRequest captureRequest;
     protected CaptureRequest.Builder captureRequestBuilder;
-    private Size imageDimension;
+    private Size imageDimension, previewSize;
     private ImageReader imageReader;
     private File file;
-    private static final int REQUEST_CAMERA_PERMISSION = 200;
-    private final int PERMISSIONS_REQUEST_SNAPSHOT = 3;
-
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
+    private static final int SENSOR_ORIENTATION_DEFAULT_DEGREES = 90;
+    private static final int SENSOR_ORIENTATION_INVERSE_DEGREES = 270;
+    private static final SparseIntArray DEFAULT_ORIENTATIONS = new SparseIntArray();
+    private static final SparseIntArray INVERSE_ORIENTATIONS = new SparseIntArray();
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private SharedPreferences settings;
     /**
@@ -93,6 +97,10 @@ public class TopLeftCam {
     byte[] jpegLength;
 
     private boolean mIsVideoCaptureIntent, mIsImageCaptureIntent, mIsonDoneClicked;
+    /**
+     * Orientation of the camera sensor
+     */
+    private int mSensorOrientation;
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -201,11 +209,12 @@ public class TopLeftCam {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
             // open your camera here
-            openCamera();
+            openCamera(width, height);
         }
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
             // Transform you image captured size according to the surface width and height
+            configureTransform(width, height);
         }
         @Override
         public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
@@ -215,34 +224,46 @@ public class TopLeftCam {
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
     };
 
-    public void openCamera() {
+    public void openCamera(int width, int height) {
         CameraManager manager = (CameraManager)mActivity.getSystemService(Context.CAMERA_SERVICE);
         Log.e(TAG, "is camera open");
         try {
+            if (!((manager.getCameraIdList().length >= 1) &&
+                  (manager.getCameraIdList().length <= 4))) {
+                Log.e(TAG, "this camera is not connected ");
+                return;
+            }
+
             cameraId = manager.getCameraIdList()[0];
             Log.e(TAG, "is camera open ID" + cameraId);
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map =
                 characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (map == null) return;
+            settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            String Key = SettingsActivity.SettingsFragment.getchangedPrefKey();
 
-            // Add permission for camera and let user grant the permission
-            if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.CAMERA) !=
-                    PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(mActivity,
-                                                   Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                    PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.RECORD_AUDIO) !=
-                    PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    mActivity,
-                    new String[] {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO,
-                                  Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_CAMERA_PERMISSION);
-                return;
+            if (Key.compareTo("video_list") == 0) {
+                String videoQuality = settings.getString("video_list", "medium");
+
+                int quality = SettingsActivity.SettingsFragment.getVideoQuality(0, videoQuality);
+                Log.d(TAG, "Selected video quality for '" + videoQuality + "' is " + quality);
+
+                mProfile = CamcorderProfile.get(0, quality);
+                previewSize = new Size(mProfile.videoFrameWidth, mProfile.videoFrameHeight);
+
+                configureTransform(width, height);
+            } else {
+                previewSize = SettingsActivity.SettingsFragment.sizeFromSettingString(
+                    settings.getString("capture_list", "640x480"));
+                Log.d(TAG,
+                      "Selected imageDimension" + previewSize.getWidth() + previewSize.getHeight());
+                configureTransform(width, height);
             }
-            mMediaRecorder = new MediaRecorder();
 
+            mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+            configureTransform(width, height);
             startBackgroundThread();
 
             manager.openCamera(cameraId, stateCallback, null);
@@ -269,10 +290,34 @@ public class TopLeftCam {
         }
         @Override
         public void onError(CameraDevice camera, int error) {
-            cameraDevice.close();
-            cameraDevice = null;
+            Log.e(TAG, "onError");
+            closeCamera();
         }
     };
+
+    private void configureTransform(int viewWidth, int viewHeight) {
+        if (null == textureView || null == previewSize) {
+            return;
+        }
+        int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+        Matrix matrix = new Matrix();
+        RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+        Log.e(TAG, "configureTransform() viewWidth: " + viewWidth + " viewHeight: " + viewHeight);
+        RectF bufferRect = new RectF(0, 0, previewSize.getHeight(), previewSize.getWidth());
+        float centerX = viewRect.centerX();
+        float centerY = viewRect.centerY();
+        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+            float scale = Math.max((float)viewHeight / previewSize.getHeight(),
+                                   (float)viewWidth / previewSize.getWidth());
+            matrix.postScale(scale, scale, centerX, centerY);
+            matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+        } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postRotate(180, centerX, centerY);
+        }
+        textureView.setTransform(matrix);
+    }
 
     protected void createCameraPreview() {
         try {
@@ -280,12 +325,12 @@ public class TopLeftCam {
             SurfaceTexture texture = textureView.getSurfaceTexture();
             if (texture == null) return;
             int quality = -1;
-
+            settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             String Key = SettingsActivity.SettingsFragment.getchangedPrefKey();
             String videoQuality = settings.getString("video_list", "medium");
 
             imageDimension = SettingsActivity.SettingsFragment.sizeFromSettingString(
-                    settings.getString("capture_list", "640x480"));
+                settings.getString("capture_list", "640x480"));
 
             quality = SettingsActivity.SettingsFragment.getVideoQuality(0, videoQuality);
             Log.d(TAG, "Selected video quality for '" + videoQuality + "' is " + quality);
@@ -336,6 +381,7 @@ public class TopLeftCam {
             imageReader = null;
         }
         if (null != mMediaRecorder) {
+            mMediaRecorder.stop();
             mMediaRecorder.reset();
             mMediaRecorder.release();
             mMediaRecorder = null;
@@ -347,7 +393,7 @@ public class TopLeftCam {
      * Starts a background thread and its {@link Handler}.
      */
     private void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("Camera-$cameraId");
+        mBackgroundThread = new HandlerThread("Camera_0");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
@@ -383,6 +429,20 @@ public class TopLeftCam {
         }
     }
 
+    /**
+     * Retrieves the JPEG orientation from the specified screen rotation.
+     *
+     * @param rotation The screen rotation.
+     * @return The JPEG orientation (one of 0, 90, 270, and 360)
+     */
+    private int getOrientation(int rotation) {
+        // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
+        // We have to take that into account and rotate JPEG properly.
+        // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
+        // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
+        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
+    }
+
     protected void takePicture() {
         if (null == cameraDevice) {
             Log.e(TAG, "cameraDevice is null");
@@ -390,11 +450,14 @@ public class TopLeftCam {
         }
 
         try {
+            settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             imageDimension = SettingsActivity.SettingsFragment.sizeFromSettingString(
                 settings.getString("capture_list", "640x480"));
+            Log.d(TAG, "Selected imageDimension " + imageDimension.getWidth() +
+                           imageDimension.getHeight());
 
             ImageReader reader = ImageReader.newInstance(
-                    imageDimension.getWidth(), imageDimension.getHeight(), ImageFormat.JPEG, 1);
+                imageDimension.getWidth(), imageDimension.getHeight(), ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             outputSurfaces.add(reader.getSurface());
             outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
@@ -405,17 +468,7 @@ public class TopLeftCam {
                                       CameraMetadata.CONTROL_MODE_AUTO);
             // Orientation
             int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-
-            // Add permission for camera and let user grant the permission
-            if (ActivityCompat.checkSelfPermission(mActivity,
-                                                   Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    mActivity, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    PERMISSIONS_REQUEST_SNAPSHOT);
-                return;
-            }
+            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
 
             String fileDetails[] = Utils.generateFileDetails(Utils.MEDIA_TYPE_IMAGE);
             if (fileDetails == null || fileDetails.length < 5) {
@@ -502,11 +555,19 @@ public class TopLeftCam {
 
     /* Recording Start*/
     private void startRecordingVideo() {
-        if (null == cameraDevice || !textureView.isAvailable() || null == mProfile) {
+        if (null == cameraDevice || !textureView.isAvailable()) {
             return;
         }
         try {
             closePreviewSession();
+            settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            String videoQuality = settings.getString("video_list", "medium");
+
+            int quality = SettingsActivity.SettingsFragment.getVideoQuality(0, videoQuality);
+            Log.d(TAG, "Selected video quality for '" + videoQuality + "' is " + quality);
+
+            mProfile = CamcorderProfile.get(0, quality);
+
             setUpMediaRecorder();
             SurfaceTexture texture = textureView.getSurfaceTexture();
             if (texture == null) return;
@@ -561,10 +622,9 @@ public class TopLeftCam {
         if (null == mActivity) {
             return;
         }
-
+        mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mMediaRecorder.setProfile(mProfile);
 
         String fileDetails[] = Utils.generateFileDetails(Utils.MEDIA_TYPE_VIDEO);
         if (fileDetails == null || fileDetails.length < 5) {
@@ -576,16 +636,33 @@ public class TopLeftCam {
             Utils.getContentValues(Utils.MEDIA_TYPE_VIDEO, fileDetails, mProfile.videoFrameWidth,
                                    mProfile.videoFrameHeight);
 
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         /**
          * set output file in media recorder
          */
         mMediaRecorder.setOutputFile(mVideoFilename);
+        mMediaRecorder.setVideoEncodingBitRate(10000000);
+        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoSize(mProfile.videoFrameWidth, mProfile.videoFrameHeight);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
+        int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+        switch (mSensorOrientation) {
+            case SENSOR_ORIENTATION_DEFAULT_DEGREES:
+                mMediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
+                break;
+            case SENSOR_ORIENTATION_INVERSE_DEGREES:
+                mMediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
+                break;
+        }
         try {
             mMediaRecorder.prepare();
         } catch (IOException ex) {
             Log.e(TAG, "prepare failed for " + mVideoFilename, ex);
             mMediaRecorder.reset();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
             throw new RuntimeException(ex);
         }
     }
@@ -604,6 +681,8 @@ public class TopLeftCam {
         // Stop recording
         mMediaRecorder.stop();
         mMediaRecorder.reset();
+        mMediaRecorder.release();
+        mMediaRecorder = null;
 
         if (null != mActivity) {
             Toast.makeText(mActivity, "Video saved: " + mVideoFilename, Toast.LENGTH_SHORT).show();

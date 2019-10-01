@@ -184,8 +184,10 @@ public class Utils {
                              Long.valueOf(fileDetails[4]) / 1000);
             contentValue.put(MediaStore.Video.Media.MIME_TYPE, fileDetails[2]);
             contentValue.put(MediaStore.Video.Media.DATA, fileDetails[3]);
-            contentValue.put(MediaStore.MediaColumns.WIDTH, width);
-            contentValue.put(MediaStore.MediaColumns.HEIGHT, height);
+            contentValue.put(MediaStore.Video.Media.WIDTH, width);
+            contentValue.put(MediaStore.Video.Media.HEIGHT, height);
+            contentValue.put(MediaStore.Video.Media.RESOLUTION,
+                             Integer.toString(width) + "x" + Integer.toString(height));
         }
         return contentValue;
     }
