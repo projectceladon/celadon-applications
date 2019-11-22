@@ -32,6 +32,8 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -681,6 +683,18 @@ public class TopLeftCam {
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        {
+            Context mContext = mActivity.getApplicationContext();
+            AudioManager mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+            AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+            for (int index = 0; index < deviceList.length; index++) {
+                Log.d(TAG, "Device : " + deviceList[index] + " deviceId = " + deviceList[index].getId() + " deviceType = " + deviceList[index].getType() + " getProductName = " + deviceList[index].getProductName() + " getAddress " + deviceList[index]. getAddress());
+                if (deviceList[index].getType() == AudioDeviceInfo.TYPE_USB_DEVICE) {
+                    mMediaRecorder.setPreferredDevice(deviceList[index]);
+                    Log.d(TAG, "mMediaRecorder.setPreferredDevice to Device : " + deviceList[index] + " deviceId = " + deviceList[index].getId() + " deviceType = " + deviceList[index].getType());
+                }
+            }
+        }
 
         if (mVideoFileDescriptor != null) {
             mMediaRecorder.setOutputFile(mVideoFileDescriptor.getFileDescriptor());
