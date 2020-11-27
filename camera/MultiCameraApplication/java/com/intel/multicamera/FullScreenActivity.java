@@ -100,10 +100,16 @@ public class FullScreenActivity extends AppCompatActivity {
         mSettings = findViewById(R.id.SettingView);
         mSettingClose = findViewById(R.id.SettingClose);
         mRoundedThumbnailView = findViewById(R.id.rounded_thumbnail_view);
-
+try {
+System.out.println("shiva start permission");
         checkPermissions();
+System.out.println("shiva start open camera");
 
         openBackCamera();
+System.out.println("shiva start open camera end");
+        } catch (Exception e) {
+System.out.println("shiva exception occured during camera open");
+}
         try {
             final IntentFilter filter = new IntentFilter();
             filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
@@ -326,12 +332,16 @@ public class FullScreenActivity extends AppCompatActivity {
     }
 
     public void openBackCamera() {
+System.out.println("shiva open back camera 1");
+
         closeCamera();
+System.out.println("shiva open back camera 2");
+
 
         GetCameraCnt();
         if (numOfCameras == 0) {
             Toast.makeText(FullScreenActivity.this, "No Camera Found", Toast.LENGTH_LONG).show();
-            System.out.println(TAG+" no camera found");
+            System.out.println(TAG+"shiva no camera found");
             return;
         }
         if (numOfCameras == 1) {
@@ -340,17 +350,24 @@ public class FullScreenActivity extends AppCompatActivity {
         }
 
         updateStorageSpace(null);
+System.out.println("shiva open back camera 3");
 
         OpenOnlyBackCamera();
+System.out.println("shiva open back camera 4");
+
     }
 
     public void openFrontCamera() {
+System.out.println("shiva open front camera 1");
+
         closeCamera();
 
         GetCameraCnt();
         updateStorageSpace(null);
 
         OpenOnlyFrontCamera();
+System.out.println("shiva open front camera 2");
+
     }
 
     private void OpenOnlyFrontCamera() {
@@ -403,13 +420,19 @@ public class FullScreenActivity extends AppCompatActivity {
     }
 
     private void OpenOnlyBackCamera() {
+System.out.println("shiva OpenOnlyBackCamera");
+
         mCamera_BackView = findViewById(R.id.textureview);
         if (mCamera_BackView == null) {
             Log.e(TAG, "fail to find surface for back camera");
             return;
         }
         if (mCameraBack == null) {
+System.out.println("shiva OpenOnlyBackCamera 1");
+
             Open_BackCamera();
+System.out.println("shiva OpenOnlyBackCamera 2");
+
         }
         if (mCamera_BackView.isAvailable()) {
             mCameraBack.textureListener.onSurfaceTextureAvailable(
@@ -428,9 +451,12 @@ public class FullScreenActivity extends AppCompatActivity {
         Data[2] = "capture_list";
         Data[3] = "video_list";
         Data[4] = "pref_resolution_1";
+System.out.println("shiva Open_BackCamera 1");
 
         mCameraBack = new CameraBase(this, mCamera_BackView, null, mRecordingTimeView,
                 Data, mRoundedThumbnailView);
+System.out.println("shiva Open_BackCamera 2");
+
     }
 
 
