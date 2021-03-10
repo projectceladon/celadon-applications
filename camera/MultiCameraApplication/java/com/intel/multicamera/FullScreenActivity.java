@@ -70,8 +70,7 @@ public class FullScreenActivity extends AppCompatActivity {
     MultiCamera mCameraInst;
     private TextView mRecordingTimeView;
     private boolean mIsRecordingVideo;
-    private CameraBase mCameraBack;
-    private CameraBase mCameraFront;
+    private CameraBase mCamera;
     private RoundedThumbnailView mRoundedThumbnailView;
     private BroadcastReceiver mUsbReceiver;
 
@@ -103,7 +102,7 @@ public class FullScreenActivity extends AppCompatActivity {
 
         checkPermissions();
 
-        openBackCamera();
+        OpenCamera();
         try {
             final IntentFilter filter = new IntentFilter();
             filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
@@ -174,14 +173,26 @@ public class FullScreenActivity extends AppCompatActivity {
                 mLastClickTime = SystemClock.elapsedRealtime();
                 MultiCamera ic_camera = MultiCamera.getInstance();
                 if (ic_camera.getWhichCamera() == 0) {
-                    openFrontCamera();
+                    mCameraInst.setOpenCameraId(1);
                     ic_camera.setWhichCamera(1);
                     Log.i(TAG,"Opened front camera");
+                    closeCamera();
+
+                    unregisterReceiver(mUsbReceiver);
+                    startActivity(new Intent(getApplicationContext(), FullScreenActivity.class));
+                    ic_camera.setWhichCamera(1);
+                    finishAffinity();
                 }
                 else {
-                    openBackCamera();
+                    mCameraInst.setOpenCameraId(0);
                     ic_camera.setWhichCamera(0);
+
                     Log.i(TAG,"Opened back camera");
+                    closeCamera();
+                    unregisterReceiver(mUsbReceiver);
+                    startActivity(new Intent(getApplicationContext(), FullScreenActivity.class));
+                    ic_camera.setWhichCamera(0);
+                    finishAffinity();
                 }
 
             }
@@ -231,12 +242,7 @@ public class FullScreenActivity extends AppCompatActivity {
                 mCameraPicture.setVisibility(View.VISIBLE);
                 mCameraSwitch.setVisibility(View.VISIBLE);
                 mCameraSplit.setVisibility(View.VISIBLE);
-                if (ic_camera.getWhichCamera() == 1) {
-                    mCameraFront.createCameraPreview();
-                }
-                else {
-                    mCameraBack.createCameraPreview();
-                }
+                mCamera.createCameraPreview();
             }
         });
 
@@ -245,6 +251,7 @@ public class FullScreenActivity extends AppCompatActivity {
             public void onClick(View v) {
                 MultiCamera ic_camera = MultiCamera.getInstance();
                 ic_camera.setIsCameraOrSurveillance(1);
+                unregisterReceiver(mUsbReceiver);
                 Intent intent = new Intent(FullScreenActivity.this, MultiViewActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -260,14 +267,10 @@ public class FullScreenActivity extends AppCompatActivity {
                     return;
                 }
                 mLastClickTime = SystemClock.elapsedRealtime();
-                if (MultiCamera.getInstance().getWhichCamera() == 1) {
-                    if (mCameraFront != null)
-                        mCameraFront.takePicture();
-                }
-                else {
-                    if (mCameraBack != null)
-                        mCameraBack.takePicture();
-                }
+
+                if (mCamera != null)
+                        mCamera.takePicture();
+
             }
         });
 
@@ -282,16 +285,11 @@ public class FullScreenActivity extends AppCompatActivity {
                 try {
                     if (mIsRecordingVideo) {
                         mIsRecordingVideo = false;
-                        if (mCameraInst.getWhichCamera() == 0) {
-                            mCameraBack.getmRecord().stopRecordingVideo();
-                            mCameraBack.getmRecord().showRecordingUI(false);
-                            mCameraBack.getmPhoto().showVideoThumbnail();
-                        }
-                        else {
-                            mCameraFront.getmRecord().stopRecordingVideo();
-                            mCameraFront.getmRecord().showRecordingUI(false);
-                            mCameraFront.getmPhoto().showVideoThumbnail();
-                        }
+
+                        mCamera.getmRecord().stopRecordingVideo();
+                        mCamera.getmRecord().showRecordingUI(false);
+                        mCamera.getmPhoto().showVideoThumbnail();
+
                         
                         if (numOfCameras > 1) {
                             mCameraSwitch.setVisibility(View.VISIBLE);
@@ -303,14 +301,10 @@ public class FullScreenActivity extends AppCompatActivity {
                         mSettings.setVisibility(View.VISIBLE);
                     } else {
                         mIsRecordingVideo =true;
-                        if (mCameraInst.getWhichCamera() == 0) {
-                            mCameraBack.getmRecord().startRecordingVideo();
-                            mCameraBack.getmRecord().showRecordingUI(true);
-                        }
-                        else {
-                            mCameraFront.getmRecord().startRecordingVideo();
-                            mCameraFront.getmRecord().showRecordingUI(true);
-                        }
+
+                        mCamera.getmRecord().startRecordingVideo();
+                        mCamera.getmRecord().showRecordingUI(true);
+
                         mSettings.setVisibility(View.GONE);
                         mCameraSwitch.setVisibility(View.GONE);
                         mCameraPicture.setVisibility(View.GONE);
@@ -324,7 +318,7 @@ public class FullScreenActivity extends AppCompatActivity {
         });
     }
 
-    public void openBackCamera() {
+    public void OpenCamera() {
         closeCamera();
 
         GetCameraCnt();
@@ -340,47 +334,14 @@ public class FullScreenActivity extends AppCompatActivity {
 
         updateStorageSpace(null);
 
-        OpenOnlyBackCamera();
+        Open_Camera();
     }
 
-    public void openFrontCamera() {
-        closeCamera();
-
-        GetCameraCnt();
-        updateStorageSpace(null);
-
-        OpenOnlyFrontCamera();
-    }
-
-    private void OpenOnlyFrontCamera() {
-
-        mCamera_FrontView = findViewById(R.id.textureview);
-        if (mCamera_FrontView == null) {
-            Log.e(TAG, "fail to get surface for front view");
-            return;
-        }
-        if (mCameraFront == null) {
-            Open_FrontCamera();
-        }
-
-        if (mCamera_FrontView.isAvailable()) {
-            mCameraFront.textureListener.onSurfaceTextureAvailable(
-                    mCamera_FrontView.getSurfaceTexture(),
-                    mCamera_FrontView.getWidth(), mCamera_FrontView.getHeight());
-        } else {
-            mCamera_FrontView.setSurfaceTextureListener(mCameraFront.textureListener);
-        }
-    }
     private void closeCamera() {
 
-        if (null != mCameraBack) {
-            mCameraBack.closeCamera();
-            mCameraBack = null;
-        }
-
-        if (null != mCameraFront) {
-            mCameraFront.closeCamera();
-            mCameraFront = null;
+        if (null != mCamera) {
+            mCamera.closeCamera();
+            mCamera = null;
         }
     }
 
@@ -401,50 +362,37 @@ public class FullScreenActivity extends AppCompatActivity {
         }
     }
 
-    private void OpenOnlyBackCamera() {
+    private void Open_Camera() {
         mCamera_BackView = findViewById(R.id.textureview);
         if (mCamera_BackView == null) {
             Log.e(TAG, "fail to find surface for back camera");
             return;
         }
-        if (mCameraBack == null) {
-            Open_BackCamera();
+        if (mCamera == null) {
+            Open_Camera_ById();
         }
         if (mCamera_BackView.isAvailable()) {
-            mCameraBack.textureListener.onSurfaceTextureAvailable(
+            mCamera.textureListener.onSurfaceTextureAvailable(
                     mCamera_BackView.getSurfaceTexture(), mCamera_BackView.getWidth(),
                     mCamera_BackView.getHeight());
         } else {
-            mCamera_BackView.setSurfaceTextureListener(mCameraBack.textureListener);
+            mCamera_BackView.setSurfaceTextureListener(mCamera.textureListener);
         }
     }
 
-    public void Open_BackCamera() {
+    public void Open_Camera_ById() {
         String[] Data = new String[5];
 
         Data[0] = "BackCamera";
-        Data[1] = CameraIds[0];
+        Data[1] = CameraIds[mCameraInst.getOpenCameraId()];
         Data[2] = "capture_list";
         Data[3] = "video_list";
         Data[4] = "pref_resolution_1";
 
-        mCameraBack = new CameraBase(this, mCamera_BackView, null, mRecordingTimeView,
+        mCamera = new CameraBase(this, mCamera_BackView, null, mRecordingTimeView,
                 Data, mRoundedThumbnailView);
     }
 
-
-    public void Open_FrontCamera() {
-        String[] Data = new String[5];
-
-        Data[0] = "FrontCamera";
-        Data[1] = CameraIds[1];
-        Data[2] = "capture_list_1";
-        Data[3] = "video_list";
-        Data[4] = "pref_resolution_1";
-
-        mCameraFront = new CameraBase(this, mCamera_FrontView, null, mRecordingTimeView,
-                Data, mRoundedThumbnailView);
-    }
     /**
      * Checks if any of the needed Android runtime permissions are missing.
      * If they are, then launch the permissions activity under one of the following conditions:
@@ -491,10 +439,8 @@ public class FullScreenActivity extends AppCompatActivity {
         Log.e(TAG, "onResume");
         MultiCamera ic_cam = MultiCamera.getInstance();
         ic_cam.setIsCameraOrSurveillance(0);
-        if (ic_cam.getWhichCamera() == 0) {
-            openBackCamera();
-        } else {
-            openFrontCamera();
-        }
+
+        Open_Camera();
+
     }
 }

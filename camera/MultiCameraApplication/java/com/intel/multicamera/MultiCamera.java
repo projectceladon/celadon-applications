@@ -37,7 +37,7 @@ public class MultiCamera {
     MultiCamera() {
         mWhichCamera = 0;
         mIsCameraOrSurveillance = 0;
-        mOpenCameraId = -1;
+        mOpenCameraId = 0;
     }
     public static MultiCamera getInstance() {
         if (ic_instance == null) {
