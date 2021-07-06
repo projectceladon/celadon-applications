@@ -515,20 +515,11 @@ public class CameraBase  {
                 mRecord.stopRecordingVideo();
             }
             mRecord.closePreviewSession();
-            try {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
                         if (null != mCameraDevice) {
                             //mCameraDevice.wait(200);
                             mCameraDevice.close();
                             mCameraDevice = null;
                         }
-                    }
-                }).start();
-            } catch (Exception e) {
-                System.out.println(TAG +" camera close exception");
-            }
 
             if (null != imageReader) {
                 imageReader.close();
