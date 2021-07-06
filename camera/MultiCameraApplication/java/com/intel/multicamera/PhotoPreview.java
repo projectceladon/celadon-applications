@@ -159,7 +159,8 @@ public class PhotoPreview {
             playButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Utils.playVideo(mActivity, videoUri, TAG);
+//                    Utils.playVideo(mActivity, videoUri, TAG);
+Utils.playVideo(mActivity, ic_camera.getCurrentUri(), TAG);
                 }
             });
 
