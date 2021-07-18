@@ -35,9 +35,13 @@ import com.intel.penguinpeakutils.VsockAddress;
 
 public class ClipboardService extends Service{
     private static final String TAG = "PenguinPeakUtils";
+    private static final String CLIPBOARD_SERVICE_LABEL = "IntelClipboardService";
+    private static final int DEFAULT_DATA_LENGTH = 4096;
+    private static final int MAX_DATA_LENGTH = 512*1024;
     private ExecutorService mThreadPool = Executors.newSingleThreadExecutor();
     private ClipboardManager mClipboardManager;
     private Vsock mVsock;
+    private VsockAddress mVsockAddress;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -53,9 +57,10 @@ public class ClipboardService extends Service{
         mClipboardManager.addPrimaryClipChangedListener(
                 mOnPrimaryClipChangedListener);
         // TODO: remove hard code on vsock port
-        mVsock = new Vsock(new VsockAddress(VsockAddress.VMADDR_CID_HOST, 77777));
+        mVsockAddress = new VsockAddress(VsockAddress.VMADDR_CID_HOST, 77777);
+        mVsock = new Vsock(mVsockAddress);
 
-        mThreadPool.execute(new HandleHostVsockContent(mVsock));
+        mThreadPool.execute(new HandleHostVsockContent());
     }
 
     @Override
@@ -80,11 +85,20 @@ public class ClipboardService extends Service{
                 @Override
                 public void onPrimaryClipChanged() {
                     ClipData mclipData = mClipboardManager.getPrimaryClip();
+		    // This clip originated from the same service, suppress it.
+		    if (CLIPBOARD_SERVICE_LABEL.equals(mclipData.getDescription().getLabel())) {
+                        return;
+		    }
                     CharSequence mText = mclipData.getItemAt(0).getText();
                     byte[] mBytes = mText.toString().getBytes(StandardCharsets.UTF_8);
 
                     try{
-                        mVsock.getOutputStream().write(mBytes, 0, mBytes.length);
+                        mVsock.getOutputStream().writeInt(mBytes.length);
+                        int writeLength = (mBytes.length < MAX_DATA_LENGTH) ? mBytes.length : MAX_DATA_LENGTH;
+                        // If Clipboard is cleared, nothing to send
+                        if (writeLength > 0) {
+                           mVsock.getOutputStream().write(mBytes, 0, writeLength);
+                        }
                     } catch (IOException exception) {
                         Log.e(TAG, "Error on handling clipboard data: " + exception.getMessage());
                     }
@@ -94,31 +108,64 @@ public class ClipboardService extends Service{
     // Class HandleHostVsockContent should receive vsock data from remote host
     private class HandleHostVsockContent implements Runnable {
         private static final String TAG = "PenguinPeakUtils";
-        private final Vsock mVsock;
 
-        private HandleHostVsockContent(Vsock vsock) {
-            mVsock = vsock;
+        private HandleHostVsockContent() {
         }
 
         @Override
         public void run() {
             // TODO: Data length is hard code here for 4096.
-            byte[] bytes = new byte[4096];
+            byte[] buffer = new byte[DEFAULT_DATA_LENGTH];
+	    try {
+	       mVsock.connect();
+            } catch (IOException exception) {
+	       Log.e(TAG, "Failed to connect: " + exception.getMessage());
+	    }
             while (true) {
+                boolean bReconnect = false;
+                byte[] bytes = buffer;
+                String content = "";
                 try {
-                    int length;
+                    int length = mVsock.getInputStream().readInt();
+                    if (length < 0 || length > MAX_DATA_LENGTH) {
+                        Log.wtf(TAG, "Unexpected data size :"+length, new Exception("Unexpected data size"));
+                        continue;
+                    }
 
-                    length = mVsock.getInputStream().read(bytes, 0, 4096);
-		    if (length > 0) {
-                        String content = new String(bytes, 0, length, StandardCharsets.UTF_8);
+                    if (length > DEFAULT_DATA_LENGTH) {
+                       bytes = new byte[length];
+                    }
 
-                        ClipData mclipData = mClipboardManager.getPrimaryClip();
-                        mclipData = ClipData.newPlainText("PenguinPeak", content);
-                        mClipboardManager.setPrimaryClip(mclipData);
-		    }
+                    if (length > 0) {
+                        mVsock.getInputStream().read(bytes, 0, length);
+                        content = new String(bytes, 0, length, StandardCharsets.UTF_8);
+                    }
+                    ClipData mclipData = mClipboardManager.getPrimaryClip();
+                    mclipData = ClipData.newPlainText(CLIPBOARD_SERVICE_LABEL, content);
+                    mClipboardManager.setPrimaryClip(mclipData);
 
                 } catch (IOException exception) {
-                    Log.e(TAG, "Error on handling host Vsock: " + exception.getMessage());
+                    if (exception.toString().contains("Connection reset") ||
+                        exception.toString().contains("Connection is closed by peer")) {
+                        Log.e(TAG, "Connection reset, attempting to reconnect");
+			bReconnect = true;
+                    } else {
+                        Log.e(TAG, "Error on handling host Vsock: " + exception.getMessage());
+                    }
+                }
+                if (bReconnect) {
+                    try {
+                        mVsock.close();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Failed to close vsock: " + e.getMessage());
+                    }
+                    try {
+                        mVsock = new Vsock(mVsockAddress);
+                        mVsock.connect();
+                        Thread.sleep(1000);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reconnecting... " + e.getMessage());
+                    } catch (InterruptedException x) {}
                 }
             }
         }

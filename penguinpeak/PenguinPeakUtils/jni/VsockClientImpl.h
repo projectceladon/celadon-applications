@@ -63,6 +63,22 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_write
 JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_read
   (JNIEnv *, jobject, jbyteArray, jint, jint);
 
+/*
+ * Class:     com_intel_penguinpeakutils_VsockClientImpl
+ * Method:    writeInt
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_writeInt
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     com_intel_penguinpeakutils_VsockClientImpl
+ * Method:    readInt
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_readInt
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

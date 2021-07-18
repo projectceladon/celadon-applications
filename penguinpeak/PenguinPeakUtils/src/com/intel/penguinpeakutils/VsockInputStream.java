@@ -43,6 +43,10 @@ public final class VsockInputStream extends InputStream {
         return temp[0];
     }
 
+    public int readInt() throws IOException {
+        return vSock.readInt();
+    }
+
     @Override
     public void close() throws IOException {
         vSock.close();
