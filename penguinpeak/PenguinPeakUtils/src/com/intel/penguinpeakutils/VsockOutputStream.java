@@ -39,6 +39,10 @@ public final class VsockOutputStream extends OutputStream {
         vSock.write(b, off, len);
     }
 
+    public void writeInt(int value) throws IOException {
+        vSock.writeInt(value);
+    }
+
     @Override
     public void close() throws IOException {
         vSock.close();

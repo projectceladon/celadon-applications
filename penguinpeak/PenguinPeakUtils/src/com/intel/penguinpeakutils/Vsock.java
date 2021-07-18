@@ -27,35 +27,27 @@ public final class Vsock extends VsockBaseVSock implements Closeable {
     private boolean connected = false;
     private VsockOutputStream outputStream;
     private VsockInputStream inputStream;
+    private VsockAddress mAddress;
 
     public Vsock() {
     }
 
     public Vsock(VsockAddress address) {
-        try {
-            getImplementation().connect(address);
-        } catch (Exception e) {
-            try {
-                close();
-            } catch (Exception ce) {
-                e.addSuppressed(ce);
-            }
-            throw new IllegalStateException(e.getMessage(), e);
-        }
+       mAddress = address;
     }
 
-    public void connect(VsockAddress address) throws SocketException {
+    public void connect() throws SocketException {
         if (isClosed()) {
             throw new SocketException("Socket closed");
         }
         if (connected) {
             throw new SocketException("Socket already connected");
         }
-        getImplementation().connect(address);
+        getImplementation().connect(mAddress);
         connected = true;
     }
 
-    public synchronized OutputStream getOutputStream() throws IOException {
+    public synchronized VsockOutputStream getOutputStream() throws IOException {
         if (isClosed()) {
             throw new SocketException("VSock is closed");
         }
@@ -65,7 +57,7 @@ public final class Vsock extends VsockBaseVSock implements Closeable {
         return outputStream;
     }
 
-    public synchronized InputStream getInputStream() throws IOException {
+    public synchronized VsockInputStream getInputStream() throws IOException {
         if (isClosed()) {
             throw new SocketException("VSock is closed");
         }
