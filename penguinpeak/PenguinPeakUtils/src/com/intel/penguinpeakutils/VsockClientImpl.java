@@ -36,4 +36,7 @@ public class VsockClientImpl {
     native void close() throws IOException;
     native void write(byte[] b, int off, int len) throws IOException;
     native int read(byte[] b, int off, int len) throws IOException;
+
+    native void writeInt(int value) throws IOException;
+    native int readInt() throws IOException;
 }
