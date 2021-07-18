@@ -45,8 +45,8 @@
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 #define DATA_SIZE_LENGTH 4
-#define MAX_CHUNK_LENGTH 4096
-#define MAX_DATA_LENGTH 64*1024
+#define MAX_CHUNK_LENGTH 8192
+#define MAX_DATA_LENGTH 512*1024
 
 static const char *vsockClientImplPath = "com/intel/penguinpeakutils/VsockClientImpl";
 static const char *vsockAddressPath = "com/intel/penguinpeakutils/VsockAddress";
@@ -54,23 +54,19 @@ static const char *javaConnException = "java/net/ConnectException";
 static const char *javaIntrIOException = "java/io/InterruptedIOException";
 static const char *sunConnResetException = "sun/net/ConnectionResetException";
 
-bool read_from_vsock(JNIEnv* env, int sockfd, uint8_t* bytes, uint32_t size) {
+int read_from_vsock(JNIEnv* env, int sockfd, uint8_t* bytes, uint32_t size) {
     int nread = (jint) recv(sockfd, bytes, size, 0);
     if (nread <= 0) {
-        if (nread < 0) {
+        if (nread < 0 && errno != ENOTCONN) {
                 env->ThrowNew(env->FindClass(javaConnException),
                     ("vsock read: Read failed with error no: " + std::to_string(errno)).c_str());
         } else {
                 env->ThrowNew(env->FindClass(javaConnException),
                     ("vsock read: Connection is closed by peer."));
         }
-        return false;
-    } else if (nread != size) {
-        env->ThrowNew(env->FindClass(javaConnException),
-            ("vsock read: Failed to read the complete msg"));
-        return false;
+        return nread;
     }
-    return true;
+    return nread;
 }
 
 bool write_to_vsock(JNIEnv* env, int sockfd, uint8_t* bytes, uint32_t size) {
@@ -123,7 +119,7 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_connect
     sock_addr.svm_cid = (int)env->GetIntField(addr, cidField);
     int status = connect(sock, (struct sockaddr *) &sock_addr, sizeof(struct sockaddr_vm));
     if (status != 0) {
-        if (errno == EALREADY) {
+        if (errno == EALREADY || errno == EISCONN ) {
             env->ThrowNew(env->FindClass(javaConnException),
                 ("Connect failed: " + std::to_string(errno)).c_str());
         }
@@ -161,15 +157,6 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_write
         return;
     }
 
-    {
-        // Send the data size first
-        uint32_t size = len;
-        size = htonl(size);
-        uint8_t* buffer = (uint8_t*)&size;
-        if (!write_to_vsock(env, s, buffer, DATA_SIZE_LENGTH)) {
-            return;
-        }
-    }
 
     // Send the actual data
     char buffer[MAX_CHUNK_LENGTH];
@@ -196,50 +183,64 @@ JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_read
         env->ThrowNew(env->FindClass(javaConnException), "vsock read: Socket is already closed");
         return -1;
     }
+    uint8_t buffer[MAX_CHUNK_LENGTH];
+    uint32_t remaining = len;
+    while (remaining > 0) {
+        int nread = 0;
+        uint32_t chunkLen = min(remaining, MAX_CHUNK_LENGTH);
+        if ((nread = read_from_vsock(env, s, buffer, chunkLen)) <= 0) {
+            ALOGE("vsock read: Failed to read complete msg");
+        }
+        env->SetByteArrayRegion(b, off, nread, (jbyte *)buffer);
+        remaining -= nread;
+        off += nread;
+    }
 
-    // Read the data size first
+    return (jint)len;
+}
+
+JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_writeInt
+  (JNIEnv *env, jobject thisObject, jint length) {
+    jclass implement = env->FindClass(vsockClientImplPath);
+    jfieldID fdField = env->GetFieldID(implement, "fd", "I");
+    int s = (int)env->GetIntField(thisObject, fdField);
+
+    if (s == -1) {
+        env->ThrowNew(env->FindClass(javaConnException), "vsock read: Socket is already closed");
+        return;
+    }
+
+    {
+        uint32_t size = length;
+        size = htonl(size);
+        uint8_t* buffer = (uint8_t*)&size;
+        if (!write_to_vsock(env, s, buffer, DATA_SIZE_LENGTH)) {
+            return;
+        }
+    }
+}
+
+
+JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_readInt
+  (JNIEnv *env, jobject thisObject) {
+    jclass implement = env->FindClass(vsockClientImplPath);
+    jfieldID fdField = env->GetFieldID(implement, "fd", "I");
+    int s = (int)env->GetIntField(thisObject, fdField);
+
+    if (s == -1) {
+        env->ThrowNew(env->FindClass(javaConnException), "vsock read: Socket is already closed");
+        return -1;
+    }
+
     uint32_t size = 0;
     {
         uint8_t buffer[DATA_SIZE_LENGTH + 1] = {0};
-        if (!read_from_vsock(env, s, buffer, DATA_SIZE_LENGTH)) {
-            ALOGD("vsock read: Failed to read data size.");
-            return 0;
+        if (read_from_vsock(env, s, buffer, DATA_SIZE_LENGTH) != DATA_SIZE_LENGTH) {
+            ALOGE("vsock read: Failed to read data size.");
+            return -1;
         }
         size = *(uint32_t*)buffer;
         size = ntohl(size);
-        if (size > MAX_DATA_LENGTH) {
-            ALOGD("vsock read: Data too long. Possible protocol violation");
-            return 0;
-        }
-    }
-
-    uint8_t buffer[MAX_CHUNK_LENGTH + 1];
-    uint32_t remaining = size;
-    uint32_t rem_buffer = len-1;
-    while (remaining > 0) {
-        uint32_t chunkLen = min(remaining, MAX_CHUNK_LENGTH);
-        if (!read_from_vsock(env, s, buffer, chunkLen)) {
-            ALOGD("vsock read: Failed to read complete msg");
-        }
-        // Even if we have exhausted the java buffer, still continue to consume full msg
-	if (rem_buffer > 0) {
-            uint32_t to_write = min(rem_buffer, chunkLen);
-	    // Mark EOF, either when there is nothing more to read,
-	    // or we have exhausted the java buffer
-	    if (rem_buffer <= chunkLen ||
-	        remaining == chunkLen){
-                buffer[to_write]=EOF;
-	    }
-            env->SetByteArrayRegion(b, off, to_write, (jbyte *)buffer);
-	    rem_buffer -= to_write;
-	}
-        remaining -= chunkLen;
-        off += chunkLen;
-    }
-
-    if (size > len) {
-        ALOGD("vsock read: Long message - %u bytes, limited read to - %d bytes", size, len);
-	return len;
     }
     return (jint)size;
 }
