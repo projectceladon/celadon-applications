@@ -171,23 +171,14 @@ public class SingleCameraActivity extends AppCompatActivity {
                 MultiCamera ic_camera = MultiCamera.getInstance();
                 if (ic_camera.getWhichCamera() == 0) {
                     ic_camera.setOpenCameraId(1);
-
-                    Log.i(TAG,"Opened front camera");
-                    closeCamera();
-                    unregisterReceiver(mUsbReceiver);
-                    startActivity(new Intent(getApplicationContext(), FullScreenActivity.class));
                     ic_camera.setWhichCamera(1);
-                    finishAffinity();
-
+                    OpenCamera();
+                    Log.i(TAG,"Opened front camera");
                 }
                 else {
                     ic_camera.setOpenCameraId(0);
-                    closeCamera();
-                    unregisterReceiver(mUsbReceiver);
-                    startActivity(new Intent(getApplicationContext(), FullScreenActivity.class));
                     ic_camera.setWhichCamera(0);
-                    finishAffinity();
-
+                    OpenCamera();
                     Log.i(TAG,"Opened back camera");
                 }
             }

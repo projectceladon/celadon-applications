@@ -179,23 +179,14 @@ public class FullScreenActivity extends AppCompatActivity {
                 if (ic_camera.getWhichCamera() == 0) {
                     mCameraInst.setOpenCameraId(1);
                     ic_camera.setWhichCamera(1);
+                    OpenCamera();
                     Log.i(TAG,"Opened front camera");
-                    closeCamera();
-
-                    unregisterReceiver(mUsbReceiver);
-                    startActivity(new Intent(getApplicationContext(), FullScreenActivity.class));
-                    ic_camera.setWhichCamera(1);
-                    finishAffinity();
                 }
                 else {
                     mCameraInst.setOpenCameraId(0);
                     ic_camera.setWhichCamera(0);
+                    OpenCamera();
                     Log.i(TAG,"Opened back camera");
-                    closeCamera();
-                    unregisterReceiver(mUsbReceiver);
-                    startActivity(new Intent(getApplicationContext(), FullScreenActivity.class));
-                    ic_camera.setWhichCamera(0);
-                    finishAffinity();
                 }
 
             }
