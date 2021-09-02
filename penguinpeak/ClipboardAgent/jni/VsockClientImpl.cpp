@@ -48,8 +48,8 @@
 #define MAX_CHUNK_LENGTH 8192
 #define MAX_DATA_LENGTH 512*1024
 
-static const char *vsockClientImplPath = "com/intel/penguinpeakutils/VsockClientImpl";
-static const char *vsockAddressPath = "com/intel/penguinpeakutils/VsockAddress";
+static const char *vsockClientImplPath = "com/intel/clipboardagent/VsockClientImpl";
+static const char *vsockAddressPath = "com/intel/clipboardagent/VsockAddress";
 static const char *javaConnException = "java/net/ConnectException";
 static const char *javaIntrIOException = "java/io/InterruptedIOException";
 static const char *sunConnResetException = "sun/net/ConnectionResetException";
@@ -87,7 +87,7 @@ bool write_to_vsock(JNIEnv* env, int sockfd, uint8_t* bytes, uint32_t size) {
     return true;
 }
 
-JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_socketCreate
+JNIEXPORT void JNICALL Java_com_intel_clipboardagent_VsockClientImpl_socketCreate
   (JNIEnv *env, jobject thisObject) {
     int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
 
@@ -96,7 +96,7 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_socketCre
     env->SetIntField(thisObject, fdField, sock);
 }
 
-JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_connect
+JNIEXPORT void JNICALL Java_com_intel_clipboardagent_VsockClientImpl_connect
   (JNIEnv *env, jobject thisObject, jobject addr) {
     jclass implement = env->FindClass(vsockClientImplPath);
     jfieldID fdField = env->GetFieldID(implement, "fd", "I");
@@ -126,7 +126,7 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_connect
     }
 }
 
-JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_close
+JNIEXPORT void JNICALL Java_com_intel_clipboardagent_VsockClientImpl_close
   (JNIEnv *env, jobject thisObject) {
     jclass implement = env->FindClass(vsockClientImplPath);
     jfieldID fdField = env->GetFieldID(implement, "fd", "I");
@@ -146,7 +146,7 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_close
     }
 }
 
-JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_write
+JNIEXPORT void JNICALL Java_com_intel_clipboardagent_VsockClientImpl_write
   (JNIEnv * env, jobject thisObject, jbyteArray b, jint offset, jint len) {
     jclass implement = env->FindClass(vsockClientImplPath);
     jfieldID fdField = env->GetFieldID(implement, "fd", "I");
@@ -173,7 +173,7 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_write
     return;
 }
 
-JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_read
+JNIEXPORT jint JNICALL Java_com_intel_clipboardagent_VsockClientImpl_read
   (JNIEnv * env, jobject thisObject, jbyteArray b, jint off, jint len) {
     jclass implement = env->FindClass(vsockClientImplPath);
     jfieldID fdField = env->GetFieldID(implement, "fd", "I");
@@ -199,7 +199,7 @@ JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_read
     return (jint)len;
 }
 
-JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_writeInt
+JNIEXPORT void JNICALL Java_com_intel_clipboardagent_VsockClientImpl_writeInt
   (JNIEnv *env, jobject thisObject, jint length) {
     jclass implement = env->FindClass(vsockClientImplPath);
     jfieldID fdField = env->GetFieldID(implement, "fd", "I");
@@ -221,7 +221,7 @@ JNIEXPORT void JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_writeInt
 }
 
 
-JNIEXPORT jint JNICALL Java_com_intel_penguinpeakutils_VsockClientImpl_readInt
+JNIEXPORT jint JNICALL Java_com_intel_clipboardagent_VsockClientImpl_readInt
   (JNIEnv *env, jobject thisObject) {
     jclass implement = env->FindClass(vsockClientImplPath);
     jfieldID fdField = env->GetFieldID(implement, "fd", "I");

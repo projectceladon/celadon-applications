@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.penguinpeakutils;
+package com.intel.clipboardagent;
 
 import java.net.SocketAddress;
 import java.util.Objects;
