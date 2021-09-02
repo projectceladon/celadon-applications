@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.intel.penguinpeakutils"
+    package="com.intel.clipboardagent"
     android:sharedUserId="android.uid.system">
 
     <!--uses-sdk android:minSdkVersion="17" android:targetSdkVersion="30"/-->
@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- TODO: update persistent and allowBackup to be true. -->
     <application
-        android:name=".PenguinPeakUtils"
+        android:name=".ClipboardAgent"
         android:persistent="true"
         android:allowBackup="false">
         <activity

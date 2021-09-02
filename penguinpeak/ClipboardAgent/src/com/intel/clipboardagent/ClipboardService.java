@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.penguinpeakutils;
+package com.intel.clipboardagent;
 
 import android.app.Service;
 import android.content.ClipData;
@@ -30,11 +30,11 @@ import java.util.concurrent.Executors;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import com.intel.penguinpeakutils.VsockClientImpl;
-import com.intel.penguinpeakutils.VsockAddress;
+import com.intel.clipboardagent.VsockClientImpl;
+import com.intel.clipboardagent.VsockAddress;
 
 public class ClipboardService extends Service{
-    private static final String TAG = "PenguinPeakUtils";
+    private static final String TAG = "ClipboardAgent";
     private static final String CLIPBOARD_SERVICE_LABEL = "IntelClipboardService";
     private static final int DEFAULT_DATA_LENGTH = 4096;
     private static final int MAX_DATA_LENGTH = 512*1024;
@@ -107,7 +107,7 @@ public class ClipboardService extends Service{
 
     // Class HandleHostVsockContent should receive vsock data from remote host
     private class HandleHostVsockContent implements Runnable {
-        private static final String TAG = "PenguinPeakUtils";
+        private static final String TAG = "ClipboardAgent";
 
         private HandleHostVsockContent() {
         }

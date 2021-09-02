@@ -19,7 +19,7 @@
 // bundles the shared library and calls it using JNI.
 
 android_app {
-    name: "PenguinPeakUtils",
+    name: "ClipboardAgent",
     srcs: ["**/*.java"],
     // JNI library built from C++ source code
     jni_libs: ["libVsocketClientImpl"],
