@@ -15,27 +15,17 @@
  * limitations under the License.
  */
 
-package com.intel.penguinpeakutils;
+package com.intel.clipboardagent;
 
-import android.app.Application;
-import android.content.Intent;
+import android.app.Activity;
+import android.os.Bundle;
 import android.util.Log;
-import com.intel.penguinpeakutils.ClipboardService;
 
-public class PenguinPeakUtils extends Application {
-    private static final String TAG = "PenguinPeakUtils";
-    private static final String SERVICE_NAME = "PenguinPeak";
+public class MainActivity extends Activity {
 
-
-    public void onCreate() {
-        Log.d(TAG, "Application onCreate");
-        super.onCreate();
-
-        startService(new Intent(this, ClipboardService.class));
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        finish();
     }
-
-    public void onTerminate() {
-        super.onTerminate();
-    }
-
 }
