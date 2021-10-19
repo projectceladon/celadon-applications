@@ -1,5 +1,4 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
 // Copyright (C) 2021 Intel Corporation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,3 +33,10 @@ android_app {
     // To match the signature
     certificate: "platform",
 }
+
+java_library {
+    name: "VsockWrapper" ,
+    srcs: ["**/*.java"],
+    sdk_version: "module_current",
+}
+
