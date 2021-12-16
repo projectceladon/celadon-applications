@@ -16,28 +16,27 @@
  */
 
 package com.intel.clipboardagent;
+import android.content.Context;
 
-import android.app.Application;
-import android.content.Intent;
-import android.util.Log;
-import com.intel.clipboardagent.GuestVsockCommService;
-import com.intel.clipboardagent.ClipboardService;
-
-public class ClipboardAgent extends Application {
-    private static final String TAG = "ClipboardAgent";
-    private static final String SERVICE_NAME = "ClipboardAgent";
-
-
-    public void onCreate() {
-        Log.d(TAG, "Application onCreate");
-        super.onCreate();
-
-        startService(new Intent(this, ClipboardService.class));
-        startService(new Intent(this, GuestVsockCommService.class));
+public class DispatchHelper {
+    static {
+       System.loadLibrary("VsockMsgDispatch");
+    }       
+    private static final String TAG = "DispatchHelper";
+    private static DispatchHelper single_instance = null;
+    public Context mContext;
+    private DispatchHelper() {
+    }
+    public static DispatchHelper getInstance() {
+       if (single_instance == null) {
+          single_instance = new DispatchHelper();
+       }
+       return single_instance;
     }
 
-    public void onTerminate() {
-        super.onTerminate();
-    }
+    public native void registerComponent(String className);
+    public native void sendMsg(String className, String msg, long handle);
+    public native void start();
+    public native void stop();
 
 }

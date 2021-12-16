@@ -25,6 +25,7 @@ cc_library_shared {
     // liblog is used to print trace log in C plus plus source code.
     shared_libs: ["liblog"],
     // No static libraries.
+    header_libs: ["jni_headers"],
     static_libs: [],
     cflags: [
         "-Wall",
@@ -35,3 +36,21 @@ cc_library_shared {
     stl: "c++_static",
     sdk_version: "current",
 }
+
+cc_library_shared {
+    name: "libVsockMsgDispatch",
+    srcs: [
+        "VsockMsgDispatcher.cpp",
+        "DispatchHelper.cpp",
+    ],
+    header_libs: ["jni_headers"],
+    cflags: [
+       "-Wall",
+       "-Werror",
+       "-Wno-unused-parameter",
+       "-Wno-unused-label",
+    ],
+    shared_libs: ["libbase", "liblog"],
+    sdk_version: "current",
+}
+    
