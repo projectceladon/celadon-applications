@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW"/>
     <!-- Need internet permission to create socket -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+    <uses-permission android:name="android.permission.GET_TASKS"/>
     <!-- TODO: update persistent and allowBackup to be true. -->
     <application
         android:name=".ClipboardAgent"
@@ -24,9 +26,12 @@
 
         <service
             android:exported="false"
+            android:name=".GuestVsockCommService">
+        </service>
+        <service
+            android:exported="false"
             android:name=".ClipboardService">
         </service>
-
     </application>
 
 </manifest>

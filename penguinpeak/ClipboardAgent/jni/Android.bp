@@ -35,3 +35,20 @@ cc_library_shared {
     stl: "c++_static",
     sdk_version: "current",
 }
+
+cc_library_shared {
+    name: "libVsockMsgDispatch",
+    srcs: [
+        "VsockMsgDispatcher.cpp",
+        "DispatchHelper.cpp",
+    ],
+    cflags: [
+       "-Wall",
+       "-Werror",
+       "-Wno-unused-parameter",
+       "-Wno-unused-label",
+    ],
+    shared_libs: ["libbase", "liblog"],
+    sdk_version: "current",
+}
+    
