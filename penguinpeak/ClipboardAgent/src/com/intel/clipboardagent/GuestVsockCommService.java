@@ -17,27 +17,33 @@
 
 package com.intel.clipboardagent;
 
-import android.app.Application;
+import android.app.Service;
 import android.content.Intent;
+import android.os.IBinder;
 import android.util.Log;
-import com.intel.clipboardagent.GuestVsockCommService;
-import com.intel.clipboardagent.ClipboardService;
+import com.intel.clipboardagent.DispatchHelper;
+import android.content.Context;
 
-public class ClipboardAgent extends Application {
-    private static final String TAG = "ClipboardAgent";
-    private static final String SERVICE_NAME = "ClipboardAgent";
+public class GuestVsockCommService extends Service{
+    private DispatchHelper dH;
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
-
+    @Override
     public void onCreate() {
-        Log.d(TAG, "Application onCreate");
         super.onCreate();
-
-        startService(new Intent(this, ClipboardService.class));
-        startService(new Intent(this, GuestVsockCommService.class));
+        dH = DispatchHelper.getInstance();
+	dH.mContext = this.getApplicationContext(); 
+	dH.registerComponent("ClipboardComponent");
+	dH.registerComponent("AppstatusComponent");
+	dH.start();
     }
 
-    public void onTerminate() {
-        super.onTerminate();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+	dH.stop();
     }
-
 }

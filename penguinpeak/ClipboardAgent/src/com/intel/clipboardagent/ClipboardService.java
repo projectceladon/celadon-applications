@@ -51,6 +51,7 @@ public class ClipboardService extends Service{
     @Override
     public void onCreate() {
         super.onCreate();
+	Log.d(TAG, "In ClipboardService onCreate");
 
         mClipboardManager =
                 (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);

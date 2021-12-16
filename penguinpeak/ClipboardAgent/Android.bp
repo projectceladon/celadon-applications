@@ -22,11 +22,11 @@ android_app {
     name: "ClipboardAgent",
     srcs: ["**/*.java"],
     // JNI library built from C++ source code
-    jni_libs: ["libVsocketClientImpl"],
+    jni_libs: ["libVsockMsgDispatch", "libVsocketClientImpl"],
     optimize: {
         enabled: false,
     },
-    sdk_version: "current",
+    sdk_version: "system_current",
     dex_preopt: {
         enabled: false,
     },
