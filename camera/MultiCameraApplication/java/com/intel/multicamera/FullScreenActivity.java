@@ -234,8 +234,13 @@ public class FullScreenActivity extends AppCompatActivity {
 
                 mCameraRecord.setVisibility(View.VISIBLE);
                 mCameraPicture.setVisibility(View.VISIBLE);
-                mCameraSwitch.setVisibility(View.VISIBLE);
-                mCameraSplit.setVisibility(View.VISIBLE);
+                if (numOfCameras == 1) {
+                    mCameraSwitch.setVisibility(View.GONE);
+                    mCameraSplit.setVisibility(View.GONE);
+                } else {
+                    mCameraSwitch.setVisibility(View.VISIBLE);
+                    mCameraSplit.setVisibility(View.VISIBLE);
+                }
                 mCamera.createCameraPreview();
             }
         });
