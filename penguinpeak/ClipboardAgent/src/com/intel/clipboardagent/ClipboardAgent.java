@@ -20,8 +20,6 @@ package com.intel.clipboardagent;
 import android.app.Application;
 import android.content.Intent;
 import android.util.Log;
-import com.intel.clipboardagent.GuestVsockCommService;
-import com.intel.clipboardagent.ClipboardService;
 
 public class ClipboardAgent extends Application {
     private static final String TAG = "ClipboardAgent";
@@ -34,6 +32,7 @@ public class ClipboardAgent extends Application {
 
         startService(new Intent(this, ClipboardService.class));
         startService(new Intent(this, GuestVsockCommService.class));
+        startService(new Intent(this, NotificationListener.class));
     }
 
     public void onTerminate() {

@@ -36,11 +36,84 @@ cc_library_shared {
     sdk_version: "current",
 }
 
+genrule {
+    name: "pgp-proto",
+    tool_files: [ ":TAF-proto-gen", ":TAF-templates", ":TAF-proto-gen-deps",],
+    srcs: [
+        "proto/appstatus-protogen.inp",
+        "proto/notification-protogen.inp",
+    ],
+    out: [
+        "proto/appstatus-gen.proto",
+        "proto/notification-gen.proto",
+    ],
+    cmd: "$(location) -I vendor/intel/external/apps/penguinpeak/ClipboardAgent/jni/ -o $(genDir) -i $(in) --proto",
+}
+
+genrule {
+    name: "pgp-headers",
+    tool_files: [ ":TAF-proto-gen", ":TAF-templates", ":TAF-proto-gen-deps",],
+    srcs: [
+        "proto/appstatus-protogen.inp",
+        "proto/notification-protogen.inp",
+    ],
+    out: [
+        "proto/appstatus.h",
+        "proto/notification.h",
+    ],
+    cmd: "$(location) -I vendor/intel/external/apps/penguinpeak/ClipboardAgent/jni/ -o $(genDir) -i $(in) --header",
+}
+
+
+genrule {
+    name: "pgp-gRPCGenStub_h",
+    tools: [
+	"aprotoc",
+	"protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -Iout/soong/.intermediates/vendor/intel/external/apps/penguinpeak/ClipboardAgent/jni/pgp-proto/gen -Ivendor/intel/external/apps/penguinpeak/ClipboardAgent/jni -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [ ":pgp-proto",
+	        "proto/appstatus.proto",
+	        "proto/notification.proto",
+          ],
+    out: [
+        "proto/appstatus.pb.h",
+        "proto/appstatus-gen.pb.h",
+        "proto/appstatus-gen.grpc.pb.h",
+        "proto/notification.pb.h",
+        "proto/notification-gen.pb.h",
+        "proto/notification-gen.grpc.pb.h",
+    ],
+}
+
+genrule {
+    name: "pgp-gRPCGenStub_cc",
+    tools: [
+	"aprotoc",
+	"protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -Iout/soong/.intermediates/vendor/intel/external/apps/penguinpeak/ClipboardAgent/jni/pgp-proto/gen -Ivendor/intel/external/apps/penguinpeak/ClipboardAgent/jni -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+            ":pgp-proto",
+	        "proto/appstatus.proto",
+            "proto/notification.proto",
+          ],
+    out: [
+        "proto/appstatus.pb.cc",
+        "proto/appstatus-gen.pb.cc",
+        "proto/appstatus-gen.grpc.pb.cc",
+        "proto/notification.pb.cc",
+        "proto/notification-gen.pb.cc",
+        "proto/notification-gen.grpc.pb.cc",
+    ],
+}
+
 cc_library_shared {
     name: "libVsockMsgDispatch",
+    defaults: ["TAF-defaults",],
     srcs: [
-        "VsockMsgDispatcher.cpp",
         "DispatchHelper.cpp",
+        "adapter.cpp",
     ],
     cflags: [
        "-Wall",
@@ -48,7 +121,19 @@ cc_library_shared {
        "-Wno-unused-parameter",
        "-Wno-unused-label",
     ],
-    shared_libs: ["libbase", "liblog"],
+    generated_headers: [ "pgp-headers", "pgp-gRPCGenStub_h", ],
+    generated_sources: [ "pgp-gRPCGenStub_cc", ],
     sdk_version: "current",
 }
-    
+
+cc_binary {
+    name: "cfc_host_agent",
+    host_supported: true,
+    defaults: ["TAF-defaults",],
+    srcs: [
+        "appstatus.cpp",
+        "notification.cpp",
+    ],
+    generated_headers: [ "pgp-headers", "pgp-gRPCGenStub_h", ],
+    generated_sources: [ "pgp-gRPCGenStub_cc", ],
+}

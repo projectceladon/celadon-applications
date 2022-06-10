@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.android.guest;
+
+message AppStatusRequest {
+  int32 req_num = 1;
+}
+
+message AppStatusResponse {
+  string app_name = 1;
+}
+

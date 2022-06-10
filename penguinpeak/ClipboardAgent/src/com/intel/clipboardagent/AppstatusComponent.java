@@ -94,8 +94,8 @@ public class AppstatusComponent {
         List<ActivityManager.RecentTaskInfo> recentTasks = mActivityManager.getRecentTasks(10, 0);
 	boolean kill = true;
         for (ActivityManager.RecentTaskInfo taskInfo : recentTasks) {
-            Log.d(TAG, "In AHSFunc, taskinfo.isRunning " + taskInfo.isRunning);
-            Log.d(TAG, "In AHSFunc, taskinfo.isVisible " + taskInfo.isVisible());
+            //Log.d(TAG, "In AHSFunc, taskinfo.isRunning " + taskInfo.isRunning);
+            //Log.d(TAG, "In AHSFunc, taskinfo.isVisible " + taskInfo.isVisible());
             if ((taskInfo.baseActivity != null) && taskInfo.isRunning && taskInfo.isVisible() && appName.equals(taskInfo.baseActivity.getPackageName())) {
 		kill = false;
 	        break;
@@ -114,41 +114,45 @@ public class AppstatusComponent {
     private final ActivityManager.OnUidImportanceListener mOnUidImportanceListener =
         new ActivityManager.OnUidImportanceListener() {
             @Override
-             public void onUidImportance(final int uid, final int importance){
-		 Log.d(TAG, "In onUidImportance event, uid = " + uid + " and importance = " + importance);
-		 String appName = getPackageName(uid);
-		 if (appName.isEmpty()) {
-                     Log.d(TAG, "No app associated with uid, so return");
-                     return;
-		 }
-		 Log.d(TAG, "In onUidImportance Listener, processing App = " + appName);
-		 dumpTaskInfo();
-		 if (uidPrevImpMap.containsKey(uid)) {
-                     int prevImp = uidPrevImpMap.get(uid);
-		     Log.d(TAG, "prev imp value of uid " + uid + " is " + prevImp);
-		     if (prevImp == IMPORTANCE_FOREGROUND) {
-		         if (importance == IMPORTANCE_GONE) {
-	                     Log.d(TAG, "App with uid " + uid + " killed, send message to host");
-                             Log.d(TAG, "1:: Sending message to host");
-                             dH.sendMsg("AppstatusComponent", appName, 0);
-			 } else if(importance >= IMPORTANCE_VISIBLE) { // && importance <= IMPORTANCE_CACHED) {
-	                     Log.d(TAG, "App with uid " + uid + " moved from foreground to background");
-			     if (killLG(appName)) {
-                                 Log.d(TAG, "2:: Sending message to host");
-                                 dH.sendMsg("AppstatusComponent", appName, 0);
-			     }
-			 }
-		     }
-                     if (importance == IMPORTANCE_GONE) {
-	                 Log.d(TAG, "App with uid " + uid + " killed, remove from the map");
-                         uidPrevImpMap.remove(uid);
-		     } else {
-                         uidPrevImpMap.put(uid, importance);
-		     }
-                 } else {
-                     uidPrevImpMap.put(uid, importance);
-		 }
-             }
+            public void onUidImportance(final int uid, final int importance){
+                Log.d(TAG, "In onUidImportance event, uid = " + uid + " and importance = " + importance);
+                String appName = getPackageName(uid);
+                if (appName.isEmpty()) {
+                            Log.d(TAG, "No app associated with uid, so return");
+                            return;
+                }
+                Log.d(TAG, "In onUidImportance Listener, processing App = " + appName);
+                // dumpTaskInfo();
+		        if (uidPrevImpMap.containsKey(uid)) {
+                    int prevImp = uidPrevImpMap.get(uid);
+		            Log.d(TAG, "prev imp value of uid " + uid + " is " + prevImp);
+		            if (prevImp == IMPORTANCE_FOREGROUND) {
+                        if (importance == IMPORTANCE_GONE) {
+                            Log.d(TAG, "App with uid " + uid + " killed, send message to host");
+                            Log.d(TAG, "1:: Sending message to host");
+                            AppStatusData appstatusData = new AppStatusData();
+                            appstatusData.app_name = appName;
+                            dH.sendMsg("AppstatusComponent", appstatusData, 0);
+                        } else if(importance >= IMPORTANCE_VISIBLE) { // && importance <= IMPORTANCE_CACHED) {
+                            Log.d(TAG, "App with uid " + uid + " moved from foreground to background");
+                            if (killLG(appName)) {
+                                AppStatusData appstatusData = new AppStatusData();
+                                appstatusData.app_name = appName;
+                                Log.d(TAG, "2:: Sending message to host");
+                                dH.sendMsg("AppstatusComponent", appstatusData, 0);
+                            }
+                        }
+		            }
+                    if (importance == IMPORTANCE_GONE) {
+                        Log.d(TAG, "App with uid " + uid + " killed, remove from the map");
+                        uidPrevImpMap.remove(uid);
+                    } else {
+                        uidPrevImpMap.put(uid, importance);
+                    }
+                } else {
+                    uidPrevImpMap.put(uid, importance);
+		        }
+            }
         };
 
     /*public void processMsg(String content, long handle) {

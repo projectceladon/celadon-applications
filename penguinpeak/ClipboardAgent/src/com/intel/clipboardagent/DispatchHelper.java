@@ -35,7 +35,7 @@ public class DispatchHelper {
     }
 
     public native void registerComponent(String className);
-    public native void sendMsg(String className, String msg, long handle);
+    public native void sendMsg(String className, Object msg, long handle);
     public native void start();
     public native void stop();
 

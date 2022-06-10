@@ -1,0 +1,11 @@
+[Template]
+Path=./../../../../../taf-grpc/core/templates/observer.template
+
+[TemplateParams]
+Class_ServiceName=AppStatus
+Type_ObserveReq=AppStatusRequest
+Type_ObserveResp=AppStatusResponse
+
+[Proto]
+MessagePath=proto/appstatus.proto
+PackageName=com.android.guest

@@ -18,10 +18,10 @@ JNIEXPORT void JNICALL Java_com_intel_clipboardagent_DispatchHelper_registerComp
 /*
  * Class:     com_intel_clipboardagent_DispatchHelper
  * Method:    sendMsg
- * Signature: (Ljava/lang/String;Ljava/lang/String;J)V
+ * Signature: (Ljava/lang/String;Ljava/lang/Object;J)V
  */
 JNIEXPORT void JNICALL Java_com_intel_clipboardagent_DispatchHelper_sendMsg
-  (JNIEnv *, jobject, jstring, jstring, jlong);
+  (JNIEnv *, jobject, jstring, jobject, jlong);
 
 /*
  * Class:     com_intel_clipboardagent_DispatchHelper

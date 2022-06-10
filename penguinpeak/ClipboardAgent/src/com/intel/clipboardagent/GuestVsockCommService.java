@@ -38,6 +38,7 @@ public class GuestVsockCommService extends Service{
 	dH.mContext = this.getApplicationContext(); 
 	dH.registerComponent("ClipboardComponent");
 	dH.registerComponent("AppstatusComponent");
+	dH.registerComponent("NotificationComponent");
 	dH.start();
     }
 
