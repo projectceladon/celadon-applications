@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.intel.multicamera">
 
-    <uses-sdk android:minSdkVersion="17" android:targetSdkVersion="30"/>
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="33"/>
 
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -14,12 +15,14 @@
 
     <application
         android:allowBackup="true"
+        tools:ignore="android:authorities"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
 	android:theme="@style/AppTheme"
-	android:requestLegacyExternalStorage="true">
+	>
+
 	<activity android:name=".MultiViewActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar"
@@ -29,22 +32,8 @@
             android:theme="@style/AppTheme.NoActionBar"
             />
         <activity
-            android:name=".CtsCameraIntentsActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="android.media.action.IMAGE_CAPTURE" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.media.action.VIDEO_CAPTURE" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <activity
             android:name=".FullScreenActivity"
+            android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
