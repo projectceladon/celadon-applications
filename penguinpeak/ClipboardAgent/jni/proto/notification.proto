@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package com.android.guest;
+
+message NotificationRequest {
+  int32 req_num = 1;
+}
+
+message NotificationResponse {
+  string package = 1;
+  string key = 2;
+  string group_key = 3;
+  string message = 4;
+  int32 priority = 5;
+}

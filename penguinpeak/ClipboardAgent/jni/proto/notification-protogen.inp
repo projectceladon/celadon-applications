@@ -1,0 +1,11 @@
+[Template]
+Path=./../../../../../taf-grpc/core/templates/observer.template
+
+[TemplateParams]
+Class_ServiceName=Notification
+Type_ObserveReq=NotificationRequest
+Type_ObserveResp=NotificationResponse
+
+[Proto]
+MessagePath=proto/notification.proto
+PackageName=com.android.guest
