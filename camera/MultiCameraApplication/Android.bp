@@ -1,0 +1,56 @@
+// Copyright (C) 2013 Google Inc.
+//
+
+package {
+    // See: http://go/android-license-faq
+    default_applicable_licenses: [
+        "Android-Apache-2.0",
+    ],
+}
+
+android_app {
+    name: "MultiCameraApp",
+
+    static_libs: [
+        "androidx.legacy_legacy-support-v13",
+        "androidx.legacy_legacy-support-v4",
+        "androidx-constraintlayout_constraintlayout",
+        "androidx.preference_preference",
+        "androidx.cardview_cardview",
+        "androidx.appcompat_appcompat",
+        "com.google.android.material_material",
+    ],
+
+    optional_uses_libs: ["org.apache.http.legacy"],
+
+    srcs: [
+        "java/**/*/*.java",
+    ],
+
+    resource_dirs: [
+        "res",
+    ],
+
+    aaptflags: [
+        "--auto-add-overlay",
+        "--version-name",
+        "2.0.002",
+        "--version-code",
+        "20002000",
+    ],
+
+    sdk_version: "current",
+
+    product_specific: true,
+
+
+    // Guava uses deprecated org.apache.http.legacy classes.
+    libs: ["org.apache.http.legacy"],
+
+    jni_libs: [
+        "libjni_tinyplanet",
+        "libjni_jpegutil",
+    ],
+}
+
+
