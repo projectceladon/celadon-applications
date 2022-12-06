@@ -20,10 +20,10 @@
 
 
     <string-array name="pref_video_list_values" translatable="false">
-        <item>@string/pref_video_quality_entry_480p</item>
-        <item>@string/pref_video_quality_entry_720p</item>
-        <item>@string/pref_video_quality_entry_1080p</item>
         <item>@string/pref_video_quality_entry_2160p</item>
+        <item>@string/pref_video_quality_entry_1080p</item>
+        <item>@string/pref_video_quality_entry_720p</item>
+        <item>@string/pref_video_quality_entry_480p</item>
     </string-array>
 
 
