@@ -144,8 +144,8 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     // from MediaRecorder.OnInfoListener
     @Override
     public void onInfo(MediaRecorder mr, int what, int extra) {
-        String[] VideofileDetails = new String[0];
         if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING) {
+            String[] VideofileDetails = new String[0];
             Toast.makeText(mActivity, R.string.video_reach_size_limit, Toast.LENGTH_SHORT).show();
 
             if (mIsRecordingVideo) {

@@ -74,7 +74,6 @@ public class CtsCamIntents {
     protected CameraCaptureSession cameraCaptureSessions;
     protected CaptureRequest.Builder captureRequestBuilder;
     private Size previewSize;
-    private ImageReader imageReader;
     private File file;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
@@ -103,7 +102,7 @@ public class CtsCamIntents {
     // The video file that the hardware camera is about to record into
     // (or is recording into.
     private String mVideoFilename, mPictureFilename;
-    private ContentValues mCurrentVideoValues, mCurrentPictureValues;
+    private ContentValues mCurrentPictureValues;
     byte[] jpegLength;
 
     private boolean mIsVideoCaptureIntent, mIsImageCaptureIntent;
@@ -479,10 +478,6 @@ public class CtsCamIntents {
         if (null != cameraDevice) {
             cameraDevice.close();
             cameraDevice = null;
-        }
-        if (null != imageReader) {
-            imageReader.close();
-            imageReader = null;
         }
         if (null != mMediaRecorder) {
             releaseMedia();
