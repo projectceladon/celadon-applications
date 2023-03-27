@@ -326,8 +326,8 @@ public class RoundedThumbnailView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        final float centerX = canvas.getWidth() / 2;
-        final float centerY = canvas.getHeight() / 2;
+        final float centerX = ((float)canvas.getWidth()) / 2;
+        final float centerY = ((float)canvas.getHeight()) / 2;
 
         final float viewDiameter = mRippleRingDiameterEnd;
         final float finalDiameter = mThumbnailShrinkDiameterEnd;

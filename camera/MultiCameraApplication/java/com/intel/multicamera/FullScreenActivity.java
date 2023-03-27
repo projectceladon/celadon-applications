@@ -51,6 +51,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 import static com.intel.multicamera.MultiViewActivity.updateStorageSpace;
 
@@ -165,6 +166,7 @@ public class FullScreenActivity extends AppCompatActivity {
 
             registerReceiver(mUsbReceiver , filter);
         } catch (Exception e) {
+            Log.e(TAG, "Exception OnCreate()");
         }
 
         mCameraSwitch.setOnClickListener(new View.OnClickListener() {
@@ -228,7 +230,6 @@ public class FullScreenActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 getFragmentManager().beginTransaction().remove(Fragment).commit();
-                MultiCamera ic_camera = MultiCamera.getInstance();
                 v.setVisibility(v.GONE);
                 mSettings.setVisibility(View.VISIBLE);
 
@@ -367,7 +368,7 @@ public class FullScreenActivity extends AppCompatActivity {
             Log.e(TAG, "fail to find surface for back camera");
             return;
         }
-        if (mCamera == null) {
+        if (Objects.isNull(mCamera)) {
             Open_Camera_ById();
         }
         if (mCamera_BackView.isAvailable()) {
@@ -375,7 +376,9 @@ public class FullScreenActivity extends AppCompatActivity {
                     mCamera_BackView.getSurfaceTexture(), mCamera_BackView.getWidth(),
                     mCamera_BackView.getHeight());
         } else {
-            mCamera_BackView.setSurfaceTextureListener(mCamera.textureListener);
+            if (!Objects.isNull(mCamera)) {
+                mCamera_BackView.setSurfaceTextureListener(mCamera.textureListener);
+	    }
         }
     }
 

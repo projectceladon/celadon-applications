@@ -74,14 +74,13 @@ public class CameraBase  {
      * An {@link AutoFitTextureView} for camera preview.
      */
     private AutoFitTextureView textureView;
-    private ImageButton FullScrn, SettingsView, takePictureButton, TakeVideoButton;
+    private ImageButton SettingsView, takePictureButton, TakeVideoButton;
 
     private String cameraId;
     private CameraDevice mCameraDevice;
     private CameraCaptureSession cameraCaptureSessions;
     private CaptureRequest.Builder captureRequestBuilder;
     private Size previewSize;
-    private ImageReader imageReader;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -116,7 +115,6 @@ public class CameraBase  {
     static final Size SIZE_720P = new Size(1280, 720);
     static final Size SIZE_480P = new Size(640, 480);
 
-    private RoundedThumbnailView mRoundedThumbnailView;
     FrameLayout roundedThumbnailViewControlLayout;
 
     private String[] ImageFileDetails;
@@ -126,10 +124,10 @@ public class CameraBase  {
                       RoundedThumbnailView roundedThumbnailView) {
         this.mActivity = activity;
         this.textureView = mtextureView;
+        mBackgroundHandler = null;
         if (Button != null) {
             this.ClickListeners(Button[0], Button[1], Button[2], Button[4], Button[5]);
             SettingsView = Button[2];
-            FullScrn = Button[3];
         }
         this.settings = PreferenceManager.getDefaultSharedPreferences(activity);
         cameraId = data[1];
@@ -201,7 +199,6 @@ public class CameraBase  {
                 Toast.makeText(mActivity, "camera split clicked ", Toast.LENGTH_LONG).show();
                 System.out.println("camera split");
                 MultiCamera ic_camera = MultiCamera.getInstance();
-                MultiViewActivity Mactivity = (MultiViewActivity) mActivity;
                 if (ic_camera.getIsCameraOrSurveillance() == 0) {
                     ic_camera.setIsCameraOrSurveillance(1);
                     Intent intent = new Intent(mActivity, MultiViewActivity.class);
@@ -530,10 +527,6 @@ public class CameraBase  {
                 System.out.println(TAG +" camera close exception");
             }
 
-            if (null != imageReader) {
-                imageReader.close();
-                imageReader = null;
-            }
 
             mRecord.releaseMedia();
 

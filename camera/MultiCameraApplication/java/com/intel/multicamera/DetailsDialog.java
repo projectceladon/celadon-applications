@@ -189,6 +189,7 @@ public class DetailsDialog {
                 tv = (TextView)LayoutInflater.from(mContext).inflate(R.layout.details, parent,
                                                                      false);
             } else {
+                assert convertView instanceof TextView : convertView;
                 tv = (TextView)convertView;
             }
             tv.setText(mItems.get(position));
@@ -233,10 +234,6 @@ public class DetailsDialog {
             return String.format(mDefaultLocale, "%d", n);
         }
 
-        /** Converts the given double to a localized String version. */
-        private String toLocalNumber(double n) {
-            return mDecimalFormat.format(n);
-        }
     }
 
     public static String getDetailsName(Context context, int key) {

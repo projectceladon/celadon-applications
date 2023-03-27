@@ -97,6 +97,7 @@ public class USBChangeDialog {
                 tv = (TextView)LayoutInflater.from(mContext).inflate(R.layout.details, parent,
                                                                      false);
             } else {
+                assert convertView instanceof TextView : convertView;
                 tv = (TextView)convertView;
             }
             return tv;
