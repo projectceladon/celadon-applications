@@ -149,7 +149,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
             if (mIsRecordingVideo) {
                 saveVideo();
-                String[] VideofileDetails = new String[0];
+                String[] VideofileDetails;
                 VideofileDetails = Utils.generateFileDetails(Utils.MEDIA_TYPE_VIDEO);
                 if (VideofileDetails == null || VideofileDetails.length < 5) {
                     Log.e(TAG, "setUpMediaRecorder Invalid file details");

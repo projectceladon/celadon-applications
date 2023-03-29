@@ -76,7 +76,6 @@ public abstract class QuickActivity extends Activity {
     /**
      * When application execution started in SystemClock.elapsedRealtimeNanos().
      */
-    protected long mExecutionStartNanoTime = 0;
     /**
      * Was this session started with onCreate().
      */
@@ -110,7 +109,6 @@ public abstract class QuickActivity extends Activity {
 
     @Override
     protected final void onCreate(Bundle bundle) {
-        mExecutionStartNanoTime = SystemClock.elapsedRealtimeNanos();
         logLifecycle("onCreate", true);
         mStartupOnCreate = true;
         super.onCreate(bundle);
