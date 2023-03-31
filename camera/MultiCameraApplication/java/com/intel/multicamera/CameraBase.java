@@ -74,15 +74,13 @@ public class CameraBase  {
      * An {@link AutoFitTextureView} for camera preview.
      */
     private AutoFitTextureView textureView;
-    private ImageButton SettingsView, takePictureButton, TakeVideoButton;
+    private ImageButton takePictureButton, TakeVideoButton;
 
     private String cameraId;
     private CameraDevice mCameraDevice;
     private CameraCaptureSession cameraCaptureSessions;
     private CaptureRequest.Builder captureRequestBuilder;
     private Size previewSize;
-    private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private SharedPreferences settings;
     private SurfaceTexture mSurfaceTexture;
@@ -115,8 +113,6 @@ public class CameraBase  {
     static final Size SIZE_720P = new Size(1280, 720);
     static final Size SIZE_480P = new Size(640, 480);
 
-    FrameLayout roundedThumbnailViewControlLayout;
-
     private String[] ImageFileDetails;
 
     public CameraBase(Activity activity, AutoFitTextureView mtextureView, ImageButton[] Button,
@@ -124,10 +120,8 @@ public class CameraBase  {
                       RoundedThumbnailView roundedThumbnailView) {
         this.mActivity = activity;
         this.textureView = mtextureView;
-        mBackgroundHandler = null;
         if (Button != null) {
             this.ClickListeners(Button[0], Button[1], Button[2], Button[4], Button[5]);
-            SettingsView = Button[2];
         }
         this.settings = PreferenceManager.getDefaultSharedPreferences(activity);
         cameraId = data[1];
@@ -142,7 +136,6 @@ public class CameraBase  {
         mRecord = new VideoRecord(this, Video_key,cameraId, mtextureView, mActivity,
             RecordingTimeView, SettingsKey);
 
-        roundedThumbnailViewControlLayout = mActivity.findViewById(R.id.control1);
         mCameraBase = this;
     }
 
@@ -685,7 +678,7 @@ public class CameraBase  {
                             }
                         }
                     };
-            reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
+            reader.setOnImageAvailableListener(readerListener, null);
             final CameraCaptureSession.CaptureCallback captureListener =
                     new CameraCaptureSession.CaptureCallback() {
                         @Override
@@ -707,7 +700,7 @@ public class CameraBase  {
                         public void onConfigured(CameraCaptureSession session) {
                             try {
                                 session.capture(captureRequestBuilder.build(), captureListener,
-                                                mBackgroundHandler);
+                                                null);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -716,7 +709,7 @@ public class CameraBase  {
                         @Override
                         public void onConfigureFailed(CameraCaptureSession session) {
                         }
-                    }, mBackgroundHandler);
+                    }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }

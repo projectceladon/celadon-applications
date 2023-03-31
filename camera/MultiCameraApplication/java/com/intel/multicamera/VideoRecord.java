@@ -75,7 +75,6 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     private String mVideoFilename, mCameraId;
     private int mSensorOrientation;
     private boolean mRecordingTimeCountsDown;
-    private Handler mBackgroundHandler;
     private final Handler mHandler;
     private static final int SENSOR_ORIENTATION_DEFAULT_DEGREES = 90;
     private static final int SENSOR_ORIENTATION_INVERSE_DEGREES = 270;
@@ -338,7 +337,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
                 releaseMedia();
             }
-        }, mBackgroundHandler);
+        }, null);
     }
 
 

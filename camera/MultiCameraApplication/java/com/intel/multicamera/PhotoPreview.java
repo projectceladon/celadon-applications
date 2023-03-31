@@ -97,7 +97,6 @@ public class PhotoPreview {
                 });
 
                 btnDelete.setOnClickListener(new View.OnClickListener() {
-                    ImageView preView;
 
                     @Override
                     public void onClick(View v) {

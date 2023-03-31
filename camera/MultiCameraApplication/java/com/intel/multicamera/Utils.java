@@ -74,8 +74,6 @@ public class Utils {
     public static final long UNKNOWN_SIZE = -3L;
     public static final long LOW_STORAGE_THRESHOLD_BYTES = 50000000;
 
-    private static Uri mCurrentPictureUri;
-
     /**
      * Has to be in sync with the receiving MovieActivity.
      */
@@ -555,7 +553,6 @@ public class Utils {
 
     public static Optional<MediaDetails> getMediaDetails(Context mContext, ContentValues info) {
         MediaDetails mediaDetails = new MediaDetails();
-        final DateFormat mDateFormatter = DateFormat.getDateTimeInstance();
 
         if (info.get(MediaStore.Video.Media.MIME_TYPE).equals("video/mp4") == true) {
 
