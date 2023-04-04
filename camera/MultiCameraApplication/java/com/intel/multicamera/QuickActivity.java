@@ -79,7 +79,6 @@ public abstract class QuickActivity extends Activity {
     /**
      * Was this session started with onCreate().
      */
-    protected boolean mStartupOnCreate = false;
 
     /**
      * A runnable for deferring tasks to be performed in onResume() if starting
@@ -110,7 +109,6 @@ public abstract class QuickActivity extends Activity {
     @Override
     protected final void onCreate(Bundle bundle) {
         logLifecycle("onCreate", true);
-        mStartupOnCreate = true;
         super.onCreate(bundle);
         mMainHandler = new Handler(getMainLooper());
         onCreateTasks(bundle);
@@ -169,7 +167,6 @@ public abstract class QuickActivity extends Activity {
             onPauseTasks();
         }
         super.onPause();
-        mStartupOnCreate = false;
         logLifecycle("onPause", false);
     }
 

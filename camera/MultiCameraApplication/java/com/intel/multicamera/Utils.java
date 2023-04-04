@@ -80,7 +80,6 @@ public class Utils {
     public static final String KEY_TREAT_UP_AS_BACK = "treat-up-as-back";
 
     private static final int DOWN_SAMPLE_FACTOR = 4;
-    private static ContentValues mCurrentPicInfo, mCurrentVideoInfo;
 
     @SuppressLint("SimpleDateFormat")
     public static File createOutputmediaStorageDir() {
