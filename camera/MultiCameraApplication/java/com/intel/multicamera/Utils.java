@@ -74,15 +74,12 @@ public class Utils {
     public static final long UNKNOWN_SIZE = -3L;
     public static final long LOW_STORAGE_THRESHOLD_BYTES = 50000000;
 
-    private static Uri mCurrentPictureUri, mCurrentVideoUri;
-
     /**
      * Has to be in sync with the receiving MovieActivity.
      */
     public static final String KEY_TREAT_UP_AS_BACK = "treat-up-as-back";
 
     private static final int DOWN_SAMPLE_FACTOR = 4;
-    private static ContentValues mCurrentPicInfo, mCurrentVideoInfo;
 
     @SuppressLint("SimpleDateFormat")
     public static File createOutputmediaStorageDir() {
@@ -394,12 +391,6 @@ public class Utils {
 
         Point dim = resizeToFill(width, height, orientation, boundingWidthPx, boundingHeightPx);
 
-        // If the orientation is not vertical
-        if (orientation % 180 != 0) {
-            int dummy = dim.x;
-            dim.x = dim.y;
-            dim.y = dummy;
-        }
 
         bitmap = loadImageThumbnailFromStream(stream, width, height, (int)(dim.x * 0.7f),
                                               (int)(dim.y * 0.7), 0, MAX_PEEK_BITMAP_PIXELS);
@@ -563,10 +554,8 @@ public class Utils {
 
     public static Optional<MediaDetails> getMediaDetails(Context mContext, ContentValues info) {
         MediaDetails mediaDetails = new MediaDetails();
-        final DateFormat mDateFormatter = DateFormat.getDateTimeInstance();
 
         if (info.get(MediaStore.Video.Media.MIME_TYPE).equals("video/mp4") == true) {
-            File file = new File(info.getAsString(MediaStore.Video.Media.DATA));
 
             mediaDetails.addDetail(MediaDetails.INDEX_TITLE,
                                    info.get(MediaStore.Video.Media.TITLE));
@@ -598,7 +587,6 @@ public class Utils {
             mediaDetails.addDetail(MediaDetails.INDEX_DURATION, duration);
 
         } else if (info.get(MediaStore.Video.Media.MIME_TYPE).equals("image/jpeg") == true) {
-            File file = new File(info.getAsString(MediaStore.Images.ImageColumns.DATA));
             mediaDetails.addDetail(MediaDetails.INDEX_TITLE,
                                    info.get(MediaStore.Images.ImageColumns.TITLE));
             mediaDetails.addDetail(MediaDetails.INDEX_PATH,

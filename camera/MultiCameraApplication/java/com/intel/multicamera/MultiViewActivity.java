@@ -39,6 +39,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 public class MultiViewActivity extends AppCompatActivity {
     private static final String TAG = "MultiViewActivity";
@@ -524,7 +525,7 @@ public class MultiViewActivity extends AppCompatActivity {
                         mTopLeftCam_textureView.getHeight());
             }
         } else {
-            if (ic_camera.getTopLeftCam() != null && mTopLeftCam_textureView != null) {
+            if (ic_camera.getTopLeftCam() != null) {
                 mTopLeftCam_textureView.setSurfaceTextureListener(
                         ic_camera.getTopLeftCam().textureListener);
             }

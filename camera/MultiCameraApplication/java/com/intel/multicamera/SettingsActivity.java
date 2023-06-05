@@ -25,7 +25,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceFragment;
 
 public class SettingsActivity extends AppCompatActivity {
-    private String TAG = "settings";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

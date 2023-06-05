@@ -75,7 +75,6 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     private String mVideoFilename, mCameraId;
     private int mSensorOrientation;
     private boolean mRecordingTimeCountsDown;
-    private Handler mBackgroundHandler;
     private final Handler mHandler;
     private static final int SENSOR_ORIENTATION_DEFAULT_DEGREES = 90;
     private static final int SENSOR_ORIENTATION_INVERSE_DEGREES = 270;
@@ -144,13 +143,12 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     // from MediaRecorder.OnInfoListener
     @Override
     public void onInfo(MediaRecorder mr, int what, int extra) {
-        String[] VideofileDetails = new String[0];
         if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING) {
             Toast.makeText(mActivity, R.string.video_reach_size_limit, Toast.LENGTH_SHORT).show();
 
             if (mIsRecordingVideo) {
                 saveVideo();
-
+                String[] VideofileDetails;
                 VideofileDetails = Utils.generateFileDetails(Utils.MEDIA_TYPE_VIDEO);
                 if (VideofileDetails == null || VideofileDetails.length < 5) {
                     Log.e(TAG, "setUpMediaRecorder Invalid file details");
@@ -339,7 +337,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
                 releaseMedia();
             }
-        }, mBackgroundHandler);
+        }, null);
     }
 
 

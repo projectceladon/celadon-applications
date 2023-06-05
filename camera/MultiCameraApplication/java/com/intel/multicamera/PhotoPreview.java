@@ -40,7 +40,6 @@ import java.util.Optional;
 
 public class PhotoPreview {
     private static final String TAG = "PhotoPreview";
-    private Uri mCurrentUri;
 
     private MultiCamera ic_camera;
     private RoundedThumbnailView mRoundedThumbnailView;
@@ -98,20 +97,21 @@ public class PhotoPreview {
                 });
 
                 btnDelete.setOnClickListener(new View.OnClickListener() {
-                    ImageView preView;
 
                     @Override
                     public void onClick(View v) {
-                        preView = mActivity.findViewById(R.id.preview);
 
-                        Uri uri = ic_camera.getCurrentUri();
                         File file = new File(ic_camera.getImagePath());
                         if (file.exists()) {
                             Log.v(TAG, " Thumbnail Preview File Deleted ");
-                            file.delete();
+                            boolean isSuccess = file.delete();
+                            if (!isSuccess) {
+                                Log.e(TAG,"file.delete() failed ");
+                            }
                             // request scan
                             Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                             scanIntent.setData(Uri.fromFile(file));
+                            scanIntent.setPackage(mActivity.getPackageName());
                             mActivity.sendBroadcast(scanIntent);
                             FrameLayout previewLayout;
                             previewLayout = mActivity.findViewById(R.id.previewLayout);
@@ -172,7 +172,6 @@ public class PhotoPreview {
     }
 
     private void photoPreview(ImageButton playButton, ImageView preView) {
-        Uri PhotoUri = ic_camera.getCurrentUri();
 
         preView.setVisibility(View.VISIBLE);
         playButton.setVisibility(View.GONE);
@@ -210,7 +209,7 @@ public class PhotoPreview {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
             mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         } catch (Exception e) {
-
+            Log.e(TAG, "getOrientation Issue: ");
         }
         return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
     }

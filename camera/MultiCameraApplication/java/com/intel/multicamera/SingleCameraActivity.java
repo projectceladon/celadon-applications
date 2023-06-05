@@ -48,6 +48,7 @@ import androidx.fragment.app.Fragment;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 import static android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED;
 import static com.intel.multicamera.MultiViewActivity.updateStorageSpace;
@@ -260,7 +261,6 @@ public class SingleCameraActivity extends AppCompatActivity {
                 mSettingClose.setVisibility(View.VISIBLE);
 
                 bundle = new Bundle();
-                MultiCamera ic_camera = MultiCamera.getInstance();
                 bundle.putString("Camera_id", CameraIds[0]);
                 bundle.putInt("root_preferences", R.xml.root_preferences);
                 bundle.putString("pref_resolution", "pref_resolution");
@@ -355,7 +355,7 @@ public class SingleCameraActivity extends AppCompatActivity {
             return;
         }
 
-        if (mCamera == null) {
+        if (Objects.isNull(mCamera)) {
             Open_Camera_ById();
         }
         if (mCamera_BackView.isAvailable()) {
@@ -363,7 +363,9 @@ public class SingleCameraActivity extends AppCompatActivity {
                     mCamera_BackView.getSurfaceTexture(), mCamera_BackView.getWidth(),
                     mCamera_BackView.getHeight());
         } else {
-            mCamera_BackView.setSurfaceTextureListener(mCamera.textureListener);
+            if (!Objects.isNull(mCamera)) {
+                mCamera_BackView.setSurfaceTextureListener(mCamera.textureListener);
+	    }
         }
     }
 
