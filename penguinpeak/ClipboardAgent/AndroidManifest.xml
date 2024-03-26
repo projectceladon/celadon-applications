@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.intel.clipboardagent"
+    android:sharedUserId="android.uid.system">
+
+    <!--uses-sdk android:minSdkVersion="17" android:targetSdkVersion="30"/-->
+    <!-- Need clipboard access, so get the SYSTEM_WINDOW permissioin -->
+    <uses-permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW"/>
+    <!-- Need internet permission to create socket -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+    <uses-permission android:name="android.permission.GET_TASKS"/>
+    <!-- TODO: update persistent and allowBackup to be true. -->
+    <application
+        android:name=".ClipboardAgent"
+        android:persistent="true"
+        android:allowBackup="false">
+        <activity
+            android:name=".MainActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <service
+            android:exported="false"
+            android:name=".GuestVsockCommService">
+        </service>
+        <service
+            android:exported="false"
+            android:name=".ClipboardService">
+        </service>
+    </application>
+
+</manifest>
