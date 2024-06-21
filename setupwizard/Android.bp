@@ -1,0 +1,22 @@
+android_app {
+    name: "SetupWizardIntel",
+
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+
+    certificate: "platform",
+    privileged: true,
+    system_ext_specific: true,
+    platform_apis: true,
+
+    overrides: ["SetupWizard"],
+
+    static_libs: [
+        "androidx.activity_activity",
+        "SettingsLib",
+        "setupcompat",
+        "setupdesign",
+        "SystemUISharedLib",
+    ],
+
+}
