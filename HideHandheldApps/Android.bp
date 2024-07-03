@@ -1,0 +1,22 @@
+// Copyright (C) 2024 Intel Android Automotive Project
+
+package {
+    // See: http://go/android-license-faq
+    default_applicable_licenses: [
+        "Android-Apache-2.0",
+    ],
+}
+
+android_app {
+    name: "HideHandheldApps",
+    sdk_version: "current",
+    overrides: [
+        "Gallery2",
+        "Browser2",
+        "DeskClock",
+        "Calendar",
+        "DocumentsUI",
+        "PhotoTable",
+        "Music",
+    ],
+}
