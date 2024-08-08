@@ -317,7 +317,12 @@ public class SingleCameraActivity extends AppCompatActivity {
             findViewById(R.id.camera_switch).setVisibility(View.GONE);
             findViewById(R.id.camera_split_view).setVisibility(View.GONE);
         }
-
+        if(numOfCameras > 2) {
+            findViewById(R.id.camera_switch).setVisibility(View.GONE);
+            findViewById(R.id.Picture).setVisibility(View.GONE);
+            findViewById(R.id.Record).setVisibility(View.GONE);
+            findViewById(R.id.SettingView).setVisibility(View.GONE);
+        }
         updateStorageSpace(null);
 
         Open_Camera();
