@@ -417,6 +417,7 @@ public class SingleCameraActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        closeCamera();
         super.onPause();
     }
 
