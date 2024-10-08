@@ -689,8 +689,16 @@ public class MultiViewActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "onStop");
-	if(isSwitchingActivity == false)
-	System.exit(0);
+	if(isSwitchingActivity == false) {
+            closeCamera();
+            try {
+                // Sleep for 100 milliseconds
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+	    System.exit(0);
+        }
     }
 
     public void settingView(View view) {
