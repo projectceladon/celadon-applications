@@ -110,6 +110,7 @@ public class CameraBase  {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    static final Size SIZE_1080P = new Size(1920, 1080);
     static final Size SIZE_720P = new Size(1280, 720);
     static final Size SIZE_480P = new Size(640, 480);
 
@@ -336,7 +337,7 @@ public class CameraBase  {
             Log.v(TAG, "onClose");
             mCameraDevice = camera;
             super.onClosed(camera);
-            previewSize = SIZE_720P;
+            previewSize = SIZE_1080P;
             configureTransform(textureView.getWidth(), textureView.getHeight());
             SurfaceUtil.clear(mSurfaceTexture);
 
@@ -412,7 +413,7 @@ public class CameraBase  {
     private Size getSelectedDimension(String Key) {
         settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
 
-        Size mDimensions = SIZE_720P;
+        Size mDimensions = SIZE_1080P;
 
         if (Key.compareTo(Video_key) == 0) {
             CamcorderProfile mProfile;
@@ -429,7 +430,7 @@ public class CameraBase  {
 
         } else {
             mDimensions = SettingsPrefUtil.sizeFromSettingString(
-                    settings.getString(Capture_Key, "1280x720"));
+                    settings.getString(Capture_Key, "1920x1080"));
         }
 
         return mDimensions;
@@ -454,10 +455,11 @@ public class CameraBase  {
             if (previewSize.getWidth() == 640 || previewSize.getWidth() == 320) {
                 previewSize = SIZE_480P;
 
-            } else if (previewSize.getWidth() == 1280 || previewSize.getWidth() == 1920) {
+            } else if (previewSize.getWidth() == 1280) {
                 previewSize = SIZE_720P;
+            } else if (previewSize.getWidth() == 1920) {
+                previewSize = SIZE_1080P;
             }
-
             Log.i(TAG, "Previewing with " + Key + " " + previewSize.getWidth() + " x " +
                                previewSize.getHeight());
 
