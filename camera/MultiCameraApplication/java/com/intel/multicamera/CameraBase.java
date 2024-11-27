@@ -80,6 +80,8 @@ public class CameraBase  {
     private CameraDevice mCameraDevice;
     private CameraCaptureSession cameraCaptureSessions;
     private CaptureRequest.Builder captureRequestBuilder;
+    private ImageReader mCaptureImageReader;
+
     private Size previewSize;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private SharedPreferences settings;
@@ -441,7 +443,10 @@ public class CameraBase  {
             SurfaceTexture texture = textureView.getSurfaceTexture();
             if (texture == null) return;
 
+            List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             Surface surface = new Surface(texture);
+
+            outputSurfaces.add(surface);
 
             String Key = GetChnagedPrefKey();
             if (Key == null)
@@ -458,6 +463,15 @@ public class CameraBase  {
                 previewSize = SIZE_720P;
             }
 
+            final Size captureSize = getSelectedDimension(Capture_Key);
+            if(captureSize == null) {
+                Log.e(TAG,"Failed to Fetch Capture Dimensions");
+                return;
+            }
+
+            mCaptureImageReader = ImageReader.newInstance(captureSize.getWidth(),captureSize.getHeight(),ImageFormat.JPEG,1);
+
+            outputSurfaces.add(mCaptureImageReader.getSurface());
             Log.i(TAG, "Previewing with " + Key + " " + previewSize.getWidth() + " x " +
                                previewSize.getHeight());
 
@@ -471,7 +485,7 @@ public class CameraBase  {
             captureRequestBuilder.addTarget(surface);
 
             mCameraDevice.createCaptureSession(
-                    Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
+                    outputSurfaces, new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                             // The camera is already closed
@@ -618,15 +632,9 @@ public class CameraBase  {
             Log.i(TAG, "Still Capture imageDimension " + imageDimension.getWidth() + " x " +
                                imageDimension.getHeight());
 
-            ImageReader reader = ImageReader.newInstance(
-                    imageDimension.getWidth(), imageDimension.getHeight(), ImageFormat.JPEG, 1);
-            List<Surface> outputSurfaces = new ArrayList<>(2);
-
-            outputSurfaces.add(reader.getSurface());
-
             captureRequestBuilder =
                     mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureRequestBuilder.addTarget(reader.getSurface());
+            captureRequestBuilder.addTarget(mCaptureImageReader.getSurface());
             captureRequestBuilder.set(CaptureRequest.CONTROL_MODE,
                                       CameraMetadata.CONTROL_MODE_AUTO);
             // Orientation
@@ -678,7 +686,7 @@ public class CameraBase  {
                             }
                         }
                     };
-            reader.setOnImageAvailableListener(readerListener, null);
+            mCaptureImageReader.setOnImageAvailableListener(readerListener, null);
             final CameraCaptureSession.CaptureCallback captureListener =
                     new CameraCaptureSession.CaptureCallback() {
                         @Override
@@ -694,22 +702,7 @@ public class CameraBase  {
                             createCameraPreview();
                         }
                     };
-            mCameraDevice.createCaptureSession(
-                    outputSurfaces, new CameraCaptureSession.StateCallback() {
-                        @Override
-                        public void onConfigured(CameraCaptureSession session) {
-                            try {
-                                session.capture(captureRequestBuilder.build(), captureListener,
-                                                null);
-                            } catch (CameraAccessException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onConfigureFailed(CameraCaptureSession session) {
-                        }
-                    }, null);
+            cameraCaptureSessions.capture(captureRequestBuilder.build(), captureListener,null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
