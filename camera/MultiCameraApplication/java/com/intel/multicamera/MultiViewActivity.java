@@ -223,15 +223,18 @@ public class MultiViewActivity extends AppCompatActivity {
             manageTopLeftCam();
             manageBotmLeftCam();
             manageTopRightCam();
-        } else if (numOfCameras == 4) {
+        } else if (numOfCameras >= 4) {
             LinLayout1.setVisibility(View.VISIBLE);
             LinLayout2.setVisibility(View.VISIBLE);
             manageTopLeftCam();
             manageTopRightCam();
             manageBotmLeftCam();
             manageBotmRightCam();
+            if (numOfCameras > 4) {
+                Log.w(TAG, "numOfCameras exceeds 4. Cameras beyond the fourth will be ignored.");
+            }
         } else {
-            Log.d(TAG, "onResume No CAMERA CONNECTED");
+            Log.w(TAG, "onResume No CAMERA CONNECTED");
         }
     }
     private void set_FrameVisibilities() {
