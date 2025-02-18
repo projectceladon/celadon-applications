@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.multicamera;
+package com.intel.AdvancedMultiCamera;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 
 import static android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED;
-import static com.intel.multicamera.MultiViewActivity.updateStorageSpace;
+import static com.intel.AdvancedMultiCamera.MultiViewActivity.updateStorageSpace;
 
 public class SingleCameraActivity extends AppCompatActivity {
     private static final String TAG = "SingleCameraActivity";

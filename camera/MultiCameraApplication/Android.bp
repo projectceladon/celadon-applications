@@ -9,7 +9,7 @@ package {
 }
 
 android_app {
-    name: "MultiCameraApp",
+    name: "AdvancedMultiCameraApp",
 
     static_libs: [
         "androidx.legacy_legacy-support-v13",
