@@ -36,6 +36,7 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -47,9 +48,8 @@ import javax.microedition.khronos.opengles.GL11;
 public class Utils {
     private static final String TAG = "Utils";
 
-    public static final String DCIM =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString();
-    public static final String DIRECTORY = DCIM + "/MultiCamera";
+    public static final String DCIM = "DCIM";
+    public static final String DIRECTORY = "MultiCamera";
 
     public static final int MEDIA_TYPE_IMAGE = 0;
     public static final int MEDIA_TYPE_VIDEO = 1;
@@ -81,68 +81,12 @@ public class Utils {
 
     private static final int DOWN_SAMPLE_FACTOR = 4;
 
-    @SuppressLint("SimpleDateFormat")
-    public static File createOutputmediaStorageDir() {
-        // To be safe, you should check that the SDCard is mounted
-        // using Environment.getExternalStorageState() before doing this.
-
-        String state = Environment.getExternalStorageState();
-        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-            Log.e(TAG, "getExternalStorageState  failed");
-            return null;
-        }
-
-        File mediaStorageDir = new File(DIRECTORY);
-        // This location works best if you want the created images to be shared
-        // between applications and persist after your app has been uninstalled.
-
-        // Create the storage directory if it does not exist
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                Log.e(TAG, "Failed to create directory for " + DIRECTORY);
-                return null;
-            }
-        }
-
-        return mediaStorageDir;
-    }
-
-    public static Uri broadcastNewPicture(Context context, ContentValues values) {
-        Uri uri = null;
-        ContentResolver resolver = context.getContentResolver();
-        try {
-            uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                  new ContentValues(values));
-        } catch (Throwable th) {
-            // This can happen when the external volume is already mounted, but
-            // MediaScanner has not notify MediaProvider to add that volume.
-            // The picture is still safe and MediaScanner will find it and
-            // insert it into MediaProvider. The only problem is that the user
-            // cannot click the thumbnail to review the picture.
-            Log.e(TAG, "Failed to write MediaStore" + th);
-        } finally {
-            Log.v(TAG, "Current Picture URI: " + uri);
-        }
+    public static void broadcastNewPicture(Context context, Uri uri) {
         context.sendBroadcast(new Intent(ACTION_NEW_PICTURE, uri));
-        return uri;
     }
 
-    public static Uri broadcastNewVideo(Context context, ContentValues values) {
-        Uri uri = null;
-        ContentResolver resolver = context.getContentResolver();
-        try {
-            Uri videoTable = Uri.parse(VIDEO_BASE_URI);
-            uri = resolver.insert(videoTable, new ContentValues(values));
-        } catch (Exception e) {
-            // We failed to insert into the database. This can happen if
-            // the SD card is unmounted.
-            Log.e(TAG, "failed to add video to media store", e);
-            uri = null;
-        } finally {
-            Log.v(TAG, "Current video URI: " + uri);
-        }
+    public static void broadcastNewVideo(Context context, Uri uri) {
         context.sendBroadcast(new Intent(ACTION_NEW_VIDEO, uri));
-        return uri;
     }
 
     public static String getFileNameFromUri(Uri uri) {
@@ -156,11 +100,6 @@ public class Utils {
     }
 
     public static String[] generateFileDetails(int type) {
-        File mediaStorageDir = createOutputmediaStorageDir();
-        if (mediaStorageDir == null) {
-            Log.e(TAG, "createOutputmediaStorageDir failed");
-            return null;
-        }
 
         long dateTaken = System.currentTimeMillis();
         Date date = new Date(dateTaken);
@@ -180,8 +119,7 @@ public class Utils {
             Log.e(TAG, "Invalid Media Type: " + type);
             return null;
         }
-
-        fileDetails[3] = mediaStorageDir.getPath() + '/' + fileDetails[1];
+        fileDetails[3] = DCIM + '/' + DIRECTORY + '/' + fileDetails[1];
         fileDetails[4] = Long.toString(dateTaken);
         Log.v(TAG, "Generated filename: " + fileDetails[3]);
         return fileDetails;
@@ -189,43 +127,34 @@ public class Utils {
 
     public static ContentValues getContentValues(int type, String[] fileDetails, int width,
                                                  int height, long duration, long size) {
-        if (fileDetails.length < 5) {
-            Log.e(TAG, "Invalid file details");
-            return null;
-        }
 
-        File file = new File(fileDetails[3]);
-        long dateModifiedSeconds = TimeUnit.MILLISECONDS.toSeconds(file.lastModified());
-
-        ContentValues contentValue = null;
+        ContentValues contentValue = new ContentValues();
         if (MEDIA_TYPE_IMAGE == type) {
-            contentValue = new ContentValues(9);
-            contentValue.put(MediaStore.Images.ImageColumns.TITLE, fileDetails[0]);
-            contentValue.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, fileDetails[1]);
-            contentValue.put(MediaStore.Images.ImageColumns.DATE_TAKEN,
-                             Long.valueOf(fileDetails[4]));
-            contentValue.put(MediaStore.Images.ImageColumns.MIME_TYPE, fileDetails[2]);
-            contentValue.put(MediaStore.Images.ImageColumns.DATE_MODIFIED, dateModifiedSeconds);
-            contentValue.put(MediaStore.Images.ImageColumns.DATA, fileDetails[3]);
-            contentValue.put(MediaStore.MediaColumns.WIDTH, width);
-            contentValue.put(MediaStore.MediaColumns.HEIGHT, height);
-            contentValue.put(MediaStore.Images.ImageColumns.SIZE, size);
+            contentValue.put(MediaStore.Images.Media.TITLE, fileDetails[0]);
+            contentValue.put(MediaStore.Images.Media.DISPLAY_NAME, fileDetails[1]);
+            contentValue.put(MediaStore.Images.Media.DATE_TAKEN,
+                             Long.parseLong(fileDetails[4]));
+            contentValue.put(MediaStore.Images.Media.MIME_TYPE, fileDetails[2]);
+            contentValue.put(MediaStore.Images.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000);
+            contentValue.put(MediaStore.Images.Media.WIDTH, width);
+            contentValue.put(MediaStore.Images.Media.HEIGHT, height);
+            contentValue.put(MediaStore.Images.Media.SIZE, size);
+            contentValue.put(MediaStore.Images.Media.RELATIVE_PATH,Environment.DIRECTORY_DCIM+"/"+DIRECTORY);
 
         } else if (MEDIA_TYPE_VIDEO == type) {
-            contentValue = new ContentValues(9);
             contentValue.put(MediaStore.Video.Media.TITLE, fileDetails[0]);
             contentValue.put(MediaStore.Video.Media.DISPLAY_NAME, fileDetails[1]);
-            contentValue.put(MediaStore.Video.Media.DATE_TAKEN, Long.valueOf(fileDetails[4]));
-            contentValue.put(MediaStore.MediaColumns.DATE_MODIFIED,
-                             Long.valueOf(fileDetails[4]) / 1000);
+            contentValue.put(MediaStore.Video.Media.DATE_TAKEN, Long.parseLong(fileDetails[4]));
+            contentValue.put(MediaStore.Video.Media.DATE_MODIFIED,
+                             System.currentTimeMillis() / 1000);
             contentValue.put(MediaStore.Video.Media.MIME_TYPE, fileDetails[2]);
-            contentValue.put(MediaStore.Video.Media.DATA, fileDetails[3]);
             contentValue.put(MediaStore.Video.Media.WIDTH, width);
             contentValue.put(MediaStore.Video.Media.HEIGHT, height);
             contentValue.put(MediaStore.Video.Media.RESOLUTION,
                              Integer.toString(width) + "x" + Integer.toString(height));
             contentValue.put(MediaStore.Video.Media.DURATION, duration);
             contentValue.put(MediaStore.Video.Media.SIZE, size);
+            contentValue.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_DCIM+"/"+DIRECTORY);
         }
         return contentValue;
     }
@@ -395,10 +324,9 @@ public class Utils {
 
         try {
             stream.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             Log.e(TAG, "Fail to close stream");
         }
-
         return Optional.ofNullable(bitmap);
         //}
     }
@@ -485,7 +413,7 @@ public class Utils {
 
     public static Optional<Bitmap> getVideoThumbnail(ContentResolver mContentResolver, Uri uri) {
         Bitmap bitmap = null;
-        ParcelFileDescriptor mVideoFileDescriptor;
+        ParcelFileDescriptor mVideoFileDescriptor = null;
 
         try {
             mVideoFileDescriptor = mContentResolver.openFileDescriptor(uri, "r");
@@ -494,6 +422,14 @@ public class Utils {
         } catch (java.io.FileNotFoundException ex) {
             // invalid uri
             Log.e(TAG, ex.toString());
+        } finally {
+            if(mVideoFileDescriptor != null) {
+                try {
+                    mVideoFileDescriptor.close();
+                } catch (IOException e) {
+                    Log.e(TAG,"Video File Close Failed");
+                }
+            }
         }
 
         if (bitmap != null) {
@@ -513,6 +449,7 @@ public class Utils {
             Intent intent = getVideoPlayerIntent(uri)
                                     .putExtra(Intent.EXTRA_TITLE, title)
                                     .putExtra(KEY_TREAT_UP_AS_BACK, true);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             activity.startActivity(intent);
 
         } catch (ActivityNotFoundException e) {
@@ -614,28 +551,14 @@ public class Utils {
     }
 
     public static long getAvailableSpace() {
-        String state = Environment.getExternalStorageState();
-        Log.d(TAG, "External storage state=" + state);
-        if (Environment.MEDIA_CHECKING.equals(state)) {
-            return PREPARING;
+        File directory = new File(Environment.getExternalStorageDirectory(),"DCIM/MultiCamera");
+        if(!directory.exists()) {
+            directory.mkdirs();
         }
-        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-            return UNAVAILABLE;
-        }
+        StatFs statFs = new StatFs(directory.getAbsolutePath());
+        long availableBlocks = statFs.getAvailableBlocksLong();
+        long blocksize = statFs.getBlockSizeLong();
 
-        File dir = createOutputmediaStorageDir();
-        if (dir == null)
-            return UNAVAILABLE;
-        if (!dir.isDirectory() || !dir.canWrite()) {
-            return UNAVAILABLE;
-        }
-
-        try {
-            StatFs stat = new StatFs(DIRECTORY);
-            return stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
-        } catch (Exception e) {
-            Log.i(TAG, "Fail to access external storage", e);
-        }
-        return UNKNOWN_SIZE;
+        return availableBlocks * blocksize;
     }
 }

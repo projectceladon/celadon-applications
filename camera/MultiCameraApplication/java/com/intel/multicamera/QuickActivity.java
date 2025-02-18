@@ -138,8 +138,7 @@ public abstract class QuickActivity extends Activity {
 
         mMainHandler.removeCallbacks(mOnResumeTasks);
         if (mSkippedFirstOnResume == false) {
-            long delay = mSkippedFirstOnResume ? ON_RESUME_DELAY_SECURE_MILLIS
-                                               : ON_RESUME_DELAY_NON_SECURE_MILLIS;
+            long delay = ON_RESUME_DELAY_NON_SECURE_MILLIS;
             // Skipping onResumeTasks; set to true.
             mSkippedFirstOnResume = true;
             Log.v(TAG, "onResume() --> postDelayed(mOnResumeTasks," + delay + ")");

@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -85,6 +86,10 @@ public class CameraBase  {
     private SharedPreferences settings;
     private SurfaceTexture mSurfaceTexture;
     private String Capture_Key, Video_key, SettingsKey;
+    private Uri mImageUri;
+    private String mPictureFileName;
+    private ContentValues mCurrentPictureValues;
+    private ImageReader mCaptureImageReader;
 
     private CameraBase mCameraBase;
     private static final String SIZE_HD = "HD 720p";
@@ -137,6 +142,7 @@ public class CameraBase  {
             RecordingTimeView, SettingsKey);
 
         mCameraBase = this;
+        mCaptureImageReader = null;
     }
 
     private void ClickListeners(ImageButton PictureButton, ImageButton RecordButton,
@@ -436,12 +442,13 @@ public class CameraBase  {
     }
 
     public void createCameraPreview() {
+        Surface surface = null;
         try {
             mRecord.closePreviewSession();
             SurfaceTexture texture = textureView.getSurfaceTexture();
             if (texture == null) return;
 
-            Surface surface = new Surface(texture);
+            surface = new Surface(texture);
 
             String Key = GetChnagedPrefKey();
             if (Key == null)
@@ -496,6 +503,8 @@ public class CameraBase  {
                     }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
+        } finally {
+            surface.release();
         }
     }
 
@@ -607,7 +616,6 @@ public class CameraBase  {
             Log.e(TAG, "cameraDevice is null");
             return;
         }
-
         try {
             final Size imageDimension = getSelectedDimension(Capture_Key);
             if (imageDimension == null) {
@@ -618,15 +626,15 @@ public class CameraBase  {
             Log.i(TAG, "Still Capture imageDimension " + imageDimension.getWidth() + " x " +
                                imageDimension.getHeight());
 
-            ImageReader reader = ImageReader.newInstance(
+            mCaptureImageReader = ImageReader.newInstance(
                     imageDimension.getWidth(), imageDimension.getHeight(), ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<>(2);
 
-            outputSurfaces.add(reader.getSurface());
+            outputSurfaces.add(mCaptureImageReader.getSurface());
 
             captureRequestBuilder =
                     mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureRequestBuilder.addTarget(reader.getSurface());
+            captureRequestBuilder.addTarget(mCaptureImageReader.getSurface());
             captureRequestBuilder.set(CaptureRequest.CONTROL_MODE,
                                       CameraMetadata.CONTROL_MODE_AUTO);
             // Orientation
@@ -639,9 +647,17 @@ public class CameraBase  {
                 Log.e(TAG, "takePicture Invalid file details");
                 return;
             }
-            String mPictureFilename = ImageFileDetails[3];
 
-            final File ImageFile = new File(mPictureFilename);
+            Context mContext = mActivity.getApplicationContext();
+            ContentResolver resolver = mContext.getContentResolver();
+            Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+            mCurrentPictureValues = Utils.getContentValues(Utils.MEDIA_TYPE_IMAGE, ImageFileDetails,imageDimension.getWidth(),
+                                                           imageDimension.getHeight(),0,0);
+
+            mImageUri = resolver.insert(collection,mCurrentPictureValues);
+            mPictureFileName = Utils.getRealPathFromURI(mContext,mImageUri);
+
+            final File ImageFile = new File(mPictureFileName);
 
             ImageReader.OnImageAvailableListener readerListener =
                     new ImageReader.OnImageAvailableListener() {
@@ -669,8 +685,10 @@ public class CameraBase  {
                         private void save(byte[] bytes) throws IOException {
                             OutputStream output = null;
                             try {
-                                output = new FileOutputStream(ImageFile);
+                                output = resolver.openOutputStream(mImageUri);
                                 output.write(bytes);
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             } finally {
                                 if (null != output) {
                                     output.close();
@@ -678,7 +696,7 @@ public class CameraBase  {
                             }
                         }
                     };
-            reader.setOnImageAvailableListener(readerListener, null);
+            mCaptureImageReader.setOnImageAvailableListener(readerListener, null);
             final CameraCaptureSession.CaptureCallback captureListener =
                     new CameraCaptureSession.CaptureCallback() {
                         @Override
@@ -716,21 +734,26 @@ public class CameraBase  {
     }
 
     private void saveImage(Size imageDimension, File ImageFile) {
-        ContentValues mCurrentPictureValues;
-        Uri uri;
+        Context mContext = mActivity.getApplicationContext();
+        ContentResolver resolver = mContext.getContentResolver();
+        File imageFile = new File(mPictureFileName);
+        if(!imageFile.exists() || imageFile.length() == 0)
+        {
+            Log.e(TAG,"Image File Does not exist "+mPictureFileName);
+            return;
+        }
+        mCurrentPictureValues.put(MediaStore.Video.Media.SIZE,imageFile.length());
 
-        mCurrentPictureValues = Utils.getContentValues(
-                Utils.MEDIA_TYPE_IMAGE, ImageFileDetails, imageDimension.getWidth(),
-                imageDimension.getHeight(), 0, ImageFile.length());
+        resolver.update(mImageUri,mCurrentPictureValues,null,null);
 
-        uri = Utils.broadcastNewPicture(mActivity.getApplicationContext(), mCurrentPictureValues);
+        Utils.broadcastNewPicture(mContext, mImageUri);
 
-        ic_camera.setCurrentUri(uri);
-        ic_camera.setImagePath(ImageFile.getAbsolutePath());
+        ic_camera.setCurrentUri(mImageUri);
+        ic_camera.setImagePath(mPictureFileName);
 
         ic_camera.setCurrentFileInfo(mCurrentPictureValues);
 
-        Log.i(TAG, "Image saved @ " + ImageFile.getAbsolutePath());
+        Log.i(TAG, "Image saved @ " + mPictureFileName);
     }
 
     private void showDetailsDialog(ContentValues info) {

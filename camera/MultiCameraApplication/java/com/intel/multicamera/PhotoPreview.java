@@ -216,7 +216,7 @@ public class PhotoPreview {
 
 
     public void showVideoThumbnail() {
-        final Uri videoUri = Uri.fromFile(new File(ic_camera.getImagePath()));
+        final Uri videoUri = ic_camera.getCurrentUri();
         mRoundedThumbnailView.startRevealThumbnailAnimation("Video taken");
 
         final Optional<Bitmap> bitmap =
