@@ -39,6 +39,12 @@
             app:positiveButtonText="@null"
             app:title="@string/pref_header_Camera_Video_Resolution" />
 
+        <!-- Allows the user to select Advanced settings like AF, AE, AW. -->
+	    <Preference
+            app:key="advanced_settings"
+            app:title="Advanced Settings"
+            app:summary="" />
+
     </PreferenceCategory>
 
 

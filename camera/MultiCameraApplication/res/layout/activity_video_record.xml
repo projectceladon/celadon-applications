@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.intel.multicamera.FullScreenActivity">
+    tools:context="com.intel.AdvancedMultiCamera.FullScreenActivity">
 
     <FrameLayout android:id="@+id/control1"
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:app="http://schemas.android.com/apk/res-auto">
 
-        <com.intel.multicamera.AutoFitTextureView
+        <com.intel.AdvancedMultiCamera.AutoFitTextureView
              android:id="@+id/textureview"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

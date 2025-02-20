@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.multicamera;
+package com.intel.AdvancedMultiCamera;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -33,6 +33,7 @@ import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragment;
@@ -42,6 +43,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import android.app.AlertDialog;
 
 public class SettingsPrefUtil
         extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -177,6 +179,47 @@ public class SettingsPrefUtil
 
         setPreferencesFromResource(root_preferences, rootKey);
         mCamcorderProfileNames = getResources().getStringArray(R.array.camcorder_profile_names);
+
+        Preference advancedSettingsPreference = findPreference("advanced_settings");
+
+        if (advancedSettingsPreference != null) {
+            advancedSettingsPreference.setOnPreferenceClickListener(preference -> {
+                showAdvancedSettingsDialog();
+                return true;
+            });
+        }
+   }
+   private void showAdvancedSettingsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View dialogView = inflater.inflate(R.layout.dialog_advanced_settings, null);
+        SwitchCompat switchAutoFocus = dialogView.findViewById(R.id.switch_auto_focus);
+        SwitchCompat switchAutoExposure = dialogView.findViewById(R.id.switch_auto_exposure);
+        SwitchCompat switchAutoWhiteBalance = dialogView.findViewById(R.id.switch_auto_white_balance);
+
+        SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
+
+        switchAutoFocus.setChecked(sharedPreferences.getBoolean("pref_auto_focus", false));
+        switchAutoExposure.setChecked(sharedPreferences.getBoolean("pref_auto_exposure", false));
+        switchAutoWhiteBalance.setChecked(sharedPreferences.getBoolean("pref_auto_white_balance", false));
+
+        builder.setView(dialogView)
+            .setTitle("Advanced Settings")
+            .setPositiveButton("OK", (dialog, which) -> {
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+
+                editor.putBoolean("pref_auto_focus", switchAutoFocus.isChecked());
+                editor.putBoolean("pref_auto_exposure", switchAutoExposure.isChecked());
+                editor.putBoolean("pref_auto_white_balance", switchAutoWhiteBalance.isChecked());
+
+                editor.apply();
+
+                Log.d(TAG, "Auto Focus: " + switchAutoFocus.isChecked());
+                Log.d(TAG, "Auto Exposure: " + switchAutoExposure.isChecked());
+                Log.d(TAG, "Auto White Balance: " + switchAutoWhiteBalance.isChecked());
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
 
     @Override

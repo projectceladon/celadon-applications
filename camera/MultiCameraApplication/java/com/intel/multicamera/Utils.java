@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.multicamera;
+package com.intel.AdvancedMultiCamera;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.multicamera;
+package com.intel.AdvancedMultiCamera;
 
 import android.app.Activity;
 import android.content.ContentValues;
@@ -58,7 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intel.multicamera.SettingsPrefUtil.SIZE_HD;
+import static com.intel.AdvancedMultiCamera.SettingsPrefUtil.SIZE_HD;
 
 public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder.OnInfoListener{
 
