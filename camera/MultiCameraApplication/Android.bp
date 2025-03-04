@@ -21,7 +21,6 @@ android_app {
         "com.google.android.material_material",
     ],
 
-    optional_uses_libs: ["org.apache.http.legacy"],
 
     srcs: [
         "java/**/*/*.java",
@@ -43,9 +42,6 @@ android_app {
 
     product_specific: true,
 
-
-    // Guava uses deprecated org.apache.http.legacy classes.
-    libs: ["org.apache.http.legacy"],
 
     jni_libs: [
         "libjni_tinyplanet",
