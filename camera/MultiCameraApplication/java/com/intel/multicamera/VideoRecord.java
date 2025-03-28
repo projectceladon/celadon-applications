@@ -41,6 +41,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.os.SystemClock;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
@@ -55,6 +56,7 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,7 +75,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     private SharedPreferences settings;
     private MediaRecorder mMediaRecorder;
     private ContentValues mCurrentVideoValues;
-    private String mVideoFilename, mCameraId;
+    private String mCameraId;
     private int mSensorOrientation;
     private boolean mRecordingTimeCountsDown;
     private final Handler mHandler;
@@ -92,6 +94,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     private MultiCamera ic_camera;
     static final Size SIZE_720P = new Size(1280, 720);
     static final Size SIZE_480P = new Size(640, 480);
+    private ParcelFileDescriptor mPfd = null;
 
     public VideoRecord(CameraBase cameraBase, String videoKey, String cameraId,
             AutoFitTextureView textureView, Activity activity, TextView recordingView,
@@ -142,6 +145,16 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     }
 
 
+    private void closeVideoFileDescriptor() {
+        if(mPfd != null) {
+            try {
+                mPfd.close();
+            } catch(IOException e) {
+                Log.e(TAG,"Failed to close fd",e);
+            }
+            mPfd = null;
+        }
+    }
     // from MediaRecorder.OnInfoListener
     @Override
     public void onInfo(MediaRecorder mr, int what, int extra) {
@@ -168,12 +181,15 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
                 mVideoUri = resolver.insert(collection,mCurrentVideoValues);
 
-                mVideoFilename = Utils.getRealPathFromURI(mContext,mVideoUri);
-
-                try {
-                    mMediaRecorder.setNextOutputFile(mContext.getContentResolver().openFileDescriptor(mVideoUri,"rw").getFileDescriptor());
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if(mVideoUri != null && "content".equals(mVideoUri.getScheme())) {
+                    try {
+                        mPfd = resolver.openFileDescriptor(mVideoUri,"rw");
+                        if(mPfd != null) {
+                            mMediaRecorder.setNextOutputFile(mPfd.getFileDescriptor());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -189,6 +205,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
         createCameraPreview();
         saveVideo();
+        closeVideoFileDescriptor();
     }
 
 
@@ -435,6 +452,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
             return;
         }
         String[] VideofileDetails;
+        closeVideoFileDescriptor();
 
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
@@ -474,14 +492,25 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
                         mProfile.videoFrameWidth, mProfile.videoFrameHeight, 0, 0);
 
         mVideoUri = resolver.insert(collection,mCurrentVideoValues);
-        mVideoFilename = Utils.getRealPathFromURI(mContext,mVideoUri);
 
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        /**
-         * set output file in media recorder
-         */
-
-        mMediaRecorder.setOutputFile(mContext.getContentResolver().openFileDescriptor(mVideoUri,"rw").getFileDescriptor());
+        if(mVideoUri != null && "content".equals(mVideoUri.getScheme()))
+        {
+            /**
+            * set output file in media recorder
+            */
+            try {
+                mPfd = resolver.openFileDescriptor(mVideoUri,"rw");
+                if(mPfd != null) {
+                    mMediaRecorder.setOutputFile(mPfd.getFileDescriptor());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.e(TAG,"Invalid URI Received");
+            return;
+        }
 
         mMediaRecorder.setVideoEncodingBitRate(10000000);
 
@@ -528,7 +557,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
         try {
             mMediaRecorder.prepare();
         } catch (IOException ex) {
-            Log.e(TAG, "MediaRecorder prepare failed for " + mVideoFilename, ex);
+            Log.e(TAG, "MediaRecorder prepare failed: " + ex);
             releaseMedia();
             throw new RuntimeException(ex);
         }
@@ -609,9 +638,6 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
             } catch (IllegalStateException e) {
                 Log.e(TAG, "stop fail", e);
-                if (mVideoFilename != null) {
-                    deleteVideoFile(mVideoFilename);
-                }
             }
             mMediaRecorder.reset();
             mMediaRecorder.release();
@@ -739,14 +765,8 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
         Context mContext = mActivity.getApplicationContext();
         ContentResolver resolver = mContext.getContentResolver();
-        File videoFile = new File(mVideoFilename);
-        if(!videoFile.exists() || videoFile.length() == 0)
-        {
-            Log.e(TAG,"Video File Does not exist "+mVideoFilename);
-            return;
-        }
         mCurrentVideoValues.put(MediaStore.Video.Media.DURATION, duration);
-        mCurrentVideoValues.put(MediaStore.Video.Media.SIZE,videoFile.length());
+        mCurrentVideoValues.put(MediaStore.Video.Media.SIZE,mPfd.getStatSize());
 
         resolver.update(mVideoUri,mCurrentVideoValues,null,null);
 
@@ -754,12 +774,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
         ic_camera.setCurrentUri(mVideoUri);
 
-        ic_camera.setImagePath(mVideoFilename);
         ic_camera.setCurrentFileInfo(mCurrentVideoValues);
-
-        Log.i(TAG, "video saved @: " + mVideoFilename);
-
-        mVideoFilename = null;
     }
 
     void setCameraDevice(CameraDevice cameraDevice) {
