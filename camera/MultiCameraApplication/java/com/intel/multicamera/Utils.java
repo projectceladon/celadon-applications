@@ -82,11 +82,11 @@ public class Utils {
     private static final int DOWN_SAMPLE_FACTOR = 4;
 
     public static void broadcastNewPicture(Context context, Uri uri) {
-        context.sendBroadcast(new Intent(ACTION_NEW_PICTURE, uri));
+        context.sendBroadcast(new Intent(ACTION_NEW_PICTURE, uri),"android.permission.BROADCAST_CAMERA");
     }
 
     public static void broadcastNewVideo(Context context, Uri uri) {
-        context.sendBroadcast(new Intent(ACTION_NEW_VIDEO, uri));
+        context.sendBroadcast(new Intent(ACTION_NEW_VIDEO, uri),"android.permission.BROADCAST_CAMERA");
     }
 
     public static String getFileNameFromUri(Uri uri) {
@@ -296,7 +296,7 @@ public class Utils {
         return b;
     }
 
-    public static Optional<Bitmap> generateThumbnail(File path, int boundingWidthPx,
+    public static Optional<Bitmap> generateThumbnail(Context context,Uri uri, int boundingWidthPx,
                                                      int boundingHeightPx) {
         final Bitmap bitmap;
 
@@ -304,28 +304,29 @@ public class Utils {
             return Storage.getPlaceholderForSession(data.getUri());
         } else {*/
 
-        FileInputStream stream;
-
+        InputStream stream = null;
         try {
-            stream = new FileInputStream(path);
-        } catch (FileNotFoundException e) {
-            Log.e(TAG, "### File not found ###:" + path.getPath());
-            return Optional.empty();
-        }
-        int width = 1280;
-        int height = 720;  //.getDimensions().getHeight();
-        int orientation = 0;
+            ContentResolver resolver = context.getContentResolver();
+            stream = resolver.openInputStream(uri);
+            int width = 1280;
+            int height = 720;  //.getDimensions().getHeight();
+            int orientation = 0;
 
-        Point dim = resizeToFill(width, height, orientation, boundingWidthPx, boundingHeightPx);
+            Point dim = resizeToFill(width, height, orientation, boundingWidthPx, boundingHeightPx);
 
 
-        bitmap = loadImageThumbnailFromStream(stream, width, height, (int)(dim.x * 0.7f),
+            bitmap = loadImageThumbnailFromStream(stream, width, height, (int)(dim.x * 0.7f),
                                               (int)(dim.y * 0.7), 0, MAX_PEEK_BITMAP_PIXELS);
-
-        try {
-            stream.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Fail to close stream");
+        } catch (FileNotFoundException e) {
+            return Optional.empty();
+        } finally {
+            if(stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    Log.e(TAG,"Fail to close stream");
+                }
+            }
         }
         return Optional.ofNullable(bitmap);
         //}
@@ -450,34 +451,11 @@ public class Utils {
                                     .putExtra(Intent.EXTRA_TITLE, title)
                                     .putExtra(KEY_TREAT_UP_AS_BACK, true);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            activity.startActivity(intent);
+            Intent chooser = Intent.createChooser(intent,"Choose an app to play Video");
+            activity.startActivity(chooser);
 
         } catch (ActivityNotFoundException e) {
             Log.e(TAG, "cant play video");
-        }
-    }
-
-    public static String getRealPathFromURI(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        int column_index;
-        try {
-            String[] proj = {MediaStore.Images.Media.DATA, MediaStore.Video.Media.DATA};
-            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
-
-            if (getMimeTypeFromURI(context, contentUri).compareTo("video/mp4") == 0) {
-                column_index = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
-                cursor.moveToFirst();
-
-            } else {
-                column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-            }
-
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
         }
     }
 
@@ -494,7 +472,8 @@ public class Utils {
 
             mediaDetails.addDetail(MediaDetails.INDEX_TITLE,
                                    info.get(MediaStore.Video.Media.TITLE));
-            mediaDetails.addDetail(MediaDetails.INDEX_PATH, info.get(MediaStore.Video.Media.DATA));
+            mediaDetails.addDetail(MediaDetails.INDEX_PATH,
+                                   info.get(MediaStore.Video.Media.RELATIVE_PATH)+"/"+info.get(MediaStore.Video.Media.TITLE)+".mp4");
             long mSizeInBytes = info.getAsLong(MediaStore.Video.Media.SIZE);
             if (mSizeInBytes > 0) {
                 mediaDetails.addDetail(MediaDetails.INDEX_SIZE, mSizeInBytes);
@@ -525,7 +504,7 @@ public class Utils {
             mediaDetails.addDetail(MediaDetails.INDEX_TITLE,
                                    info.get(MediaStore.Images.ImageColumns.TITLE));
             mediaDetails.addDetail(MediaDetails.INDEX_PATH,
-                                   info.get(MediaStore.Images.ImageColumns.DATA));
+                                   info.get(MediaStore.Images.Media.RELATIVE_PATH)+"/"+info.get(MediaStore.Images.ImageColumns.TITLE)+".jpg");
             String Dimensions = MediaDetails.getDimentions(
                     mContext, info.getAsInteger(MediaStore.MediaColumns.WIDTH),
                     info.getAsInteger(MediaStore.MediaColumns.HEIGHT));
@@ -551,14 +530,22 @@ public class Utils {
     }
 
     public static long getAvailableSpace() {
-        File directory = new File(Environment.getExternalStorageDirectory(),"DCIM/MultiCamera");
-        if(!directory.exists()) {
-            directory.mkdirs();
-        }
-        StatFs statFs = new StatFs(directory.getAbsolutePath());
-        long availableBlocks = statFs.getAvailableBlocksLong();
-        long blocksize = statFs.getBlockSizeLong();
 
-        return availableBlocks * blocksize;
+        if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            //External storage is used to store large media files that need to be accessible
+            //even when the app is not running. The files are encrypted to ensure security.
+            File directory = new File(Environment.getExternalStorageDirectory(),"DCIM/MultiCamera");
+            if(!directory.exists())
+            {
+                Log.e(TAG,"MultiCamera Directory Does not Exist");
+                return -1;
+            }
+            StatFs statFs = new StatFs(directory.getAbsolutePath());
+            long availableBlocks = statFs.getAvailableBlocksLong();
+            long blocksize = statFs.getBlockSizeLong();
+
+            return availableBlocks * blocksize;
+        }
+        return -1;
     }
 }
