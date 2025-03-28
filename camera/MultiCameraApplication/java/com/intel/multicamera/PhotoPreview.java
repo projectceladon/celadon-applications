@@ -20,6 +20,7 @@ package com.intel.multicamera;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentValues;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -101,16 +102,18 @@ public class PhotoPreview {
                     @Override
                     public void onClick(View v) {
 
-                        File file = new File(ic_camera.getImagePath());
-                        if (file.exists()) {
+                        Uri currentUri = ic_camera.getCurrentUri();
+                        if (currentUri != null) {
                             Log.v(TAG, " Thumbnail Preview File Deleted ");
-                            boolean isSuccess = file.delete();
-                            if (!isSuccess) {
+                            Context mContext = mActivity.getApplicationContext();
+                            ContentResolver resolver = mContext.getContentResolver();
+                            int deletedRows = resolver.delete(currentUri,null,null);
+                            if (deletedRows <= 0) {
                                 Log.e(TAG,"file.delete() failed ");
                             }
                             // request scan
                             Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                            scanIntent.setData(Uri.fromFile(file));
+                            scanIntent.setData(currentUri);
                             scanIntent.setPackage(mActivity.getPackageName());
                             mActivity.sendBroadcast(scanIntent);
                             FrameLayout previewLayout;
@@ -150,7 +153,7 @@ public class PhotoPreview {
     }
 
     private void VideoPreview(ImageButton playButton, ImageView preView) {
-        final Uri videoUri = Uri.fromFile(new File(ic_camera.getImagePath()));
+        final Uri videoUri = ic_camera.getCurrentUri();
         final Optional<Bitmap> bitmap =
                 Utils.getVideoThumbnail(mActivity.getContentResolver(), videoUri);
         if (bitmap.isPresent()) {
@@ -176,13 +179,13 @@ public class PhotoPreview {
         preView.setVisibility(View.VISIBLE);
         playButton.setVisibility(View.GONE);
 
-        preView.setImageURI(Uri.fromFile(new File(ic_camera.getImagePath())));
+        preView.setImageURI(ic_camera.getCurrentUri());
     }
 
-    public void showImageThumbnail(File ImageFile) {
+    public void showImageThumbnail(Uri imageUri) {
         final int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
         final Optional<Bitmap> bitmap =
-                Utils.generateThumbnail(ImageFile, roundedThumbnailViewControlLayout.getWidth(),
+                Utils.generateThumbnail(mActivity.getApplicationContext(),imageUri, roundedThumbnailViewControlLayout.getWidth(),
                         roundedThumbnailViewControlLayout.getMeasuredHeight());
 
         if (bitmap.isPresent()) {
