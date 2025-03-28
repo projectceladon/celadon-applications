@@ -87,7 +87,6 @@ public class CameraBase  {
     private SurfaceTexture mSurfaceTexture;
     private String Capture_Key, Video_key, SettingsKey;
     private Uri mImageUri;
-    private String mPictureFileName;
     private ContentValues mCurrentPictureValues;
     private ImageReader mCaptureImageReader;
 
@@ -504,7 +503,9 @@ public class CameraBase  {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } finally {
-            surface.release();
+            if(surface != null) {
+                surface.release();
+            }
         }
     }
 
@@ -655,9 +656,6 @@ public class CameraBase  {
                                                            imageDimension.getHeight(),0,0);
 
             mImageUri = resolver.insert(collection,mCurrentPictureValues);
-            mPictureFileName = Utils.getRealPathFromURI(mContext,mImageUri);
-
-            final File ImageFile = new File(mPictureFileName);
 
             ImageReader.OnImageAvailableListener readerListener =
                     new ImageReader.OnImageAvailableListener() {
@@ -687,11 +685,17 @@ public class CameraBase  {
                             try {
                                 output = resolver.openOutputStream(mImageUri);
                                 output.write(bytes);
+                                mCurrentPictureValues.put(MediaStore.Images.Media.SIZE,bytes.length);
+                                resolver.update(mImageUri,mCurrentPictureValues,null,null);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             } finally {
                                 if (null != output) {
-                                    output.close();
+                                    try {
+                                        output.close();
+                                    } catch (IOException e) {
+                                        Log.e(TAG,"Error Closing Output Stream while saving Image");
+                                    }
                                 }
                             }
                         }
@@ -705,9 +709,9 @@ public class CameraBase  {
                                                        TotalCaptureResult result) {
                             super.onCaptureCompleted(session, request, result);
 
-                            saveImage(imageDimension, ImageFile);
+                            saveImage();
 
-                            mPhoto.showImageThumbnail(ImageFile);
+                            mPhoto.showImageThumbnail(mImageUri);
 
                             createCameraPreview();
                         }
@@ -733,27 +737,14 @@ public class CameraBase  {
         }
     }
 
-    private void saveImage(Size imageDimension, File ImageFile) {
+    private void saveImage() {
         Context mContext = mActivity.getApplicationContext();
-        ContentResolver resolver = mContext.getContentResolver();
-        File imageFile = new File(mPictureFileName);
-        if(!imageFile.exists() || imageFile.length() == 0)
-        {
-            Log.e(TAG,"Image File Does not exist "+mPictureFileName);
-            return;
-        }
-        mCurrentPictureValues.put(MediaStore.Video.Media.SIZE,imageFile.length());
-
-        resolver.update(mImageUri,mCurrentPictureValues,null,null);
-
         Utils.broadcastNewPicture(mContext, mImageUri);
 
         ic_camera.setCurrentUri(mImageUri);
-        ic_camera.setImagePath(mPictureFileName);
 
         ic_camera.setCurrentFileInfo(mCurrentPictureValues);
 
-        Log.i(TAG, "Image saved @ " + mPictureFileName);
     }
 
     private void showDetailsDialog(ContentValues info) {
