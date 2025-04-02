@@ -460,8 +460,11 @@ public class Utils {
     }
 
     public static String getMimeTypeFromURI(Context context, Uri uri) {
-        ContentResolver cR = context.getContentResolver();
-        String type = cR.getType(uri);
+        String type = null;
+        if(uri != null) {
+            ContentResolver cR = context.getContentResolver();
+            type = cR.getType(uri);
+        }
         return type;
     }
 
