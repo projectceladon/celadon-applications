@@ -40,6 +40,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.util.List;
+import java.util.ArrayList;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -342,13 +344,25 @@ public class SingleCameraActivity extends AppCompatActivity {
         CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
 
         try {
-            CameraIds = manager.getCameraIdList();
-            numOfCameras = manager.getCameraIdList().length;
+            String[] allCameraIds = manager.getCameraIdList();
+            List<String> validCameraIds = new ArrayList<>();
+
+            for (String cameraId : allCameraIds) {
+                if (Integer.parseInt(cameraId) < 50) {
+                    validCameraIds.add(cameraId);
+                    Log.v(TAG, "Get camera : " + cameraId);
+                } else {
+                    Log.v(TAG, "Skipping camera with ID >= 50: " + cameraId);
+                }
+            }
+
+            CameraIds = validCameraIds.toArray(new String[0]);
+            numOfCameras = CameraIds.length;
             if (numOfCameras == 0) {
                 Toast.makeText(SingleCameraActivity.this, "No camera found, closing the application",
                     Toast.LENGTH_LONG).show();
             }
-            Log.d(TAG, "Get total number of cameras present: " + manager.getCameraIdList().length);
+            Log.v(TAG, "Get total number of cameras present: " + numOfCameras);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
