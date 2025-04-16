@@ -687,6 +687,7 @@ public class CameraBase  {
                                 output.write(bytes);
                                 mCurrentPictureValues.put(MediaStore.Images.Media.SIZE,bytes.length);
                                 resolver.update(mImageUri,mCurrentPictureValues,null,null);
+                                output.close();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             } finally {
