@@ -317,7 +317,8 @@ public class Utils {
 
             bitmap = loadImageThumbnailFromStream(stream, width, height, (int)(dim.x * 0.7f),
                                               (int)(dim.y * 0.7), 0, MAX_PEEK_BITMAP_PIXELS);
-        } catch (FileNotFoundException e) {
+            stream.close();
+        } catch (IOException e) {
             return Optional.empty();
         } finally {
             if(stream != null) {
