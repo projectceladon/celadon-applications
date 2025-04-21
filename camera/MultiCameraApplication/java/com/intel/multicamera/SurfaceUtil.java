@@ -43,7 +43,7 @@ public class SurfaceUtil {
 
         egl.eglMakeCurrent(display, surface, surface, context);
 
-        GLES20.glClearColor(0, 0, 1, 0);
+        GLES20.glClearColor(0, 0, 0, 1);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         egl.eglSwapBuffers(display, surface);
