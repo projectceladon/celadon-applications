@@ -138,7 +138,7 @@ public class CameraBase  {
 
         mPhoto = new PhotoPreview(activity, roundedThumbnailView, cameraId);
         mRecord = new VideoRecord(this, Video_key,cameraId, mtextureView, mActivity,
-            RecordingTimeView, SettingsKey);
+            RecordingTimeView, SettingsKey, Capture_Key);
 
         mCameraBase = this;
         mCaptureImageReader = null;
@@ -515,22 +515,12 @@ public class CameraBase  {
                 mRecord.stopRecordingVideo();
             }
             mRecord.closePreviewSession();
-            try {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (null != mCameraDevice) {
-                            //mCameraDevice.wait(200);
-                            mCameraDevice.close();
-                            mCameraDevice = null;
-                        }
-                    }
-                }).start();
-            } catch (Exception e) {
-                System.out.println(TAG +" camera close exception");
+
+            if (null != mCameraDevice) {
+                //mCameraDevice.wait(200);
+                mCameraDevice.close();
+                mCameraDevice = null;
             }
-
-
             mRecord.releaseMedia();
 
         } catch (Exception e) {

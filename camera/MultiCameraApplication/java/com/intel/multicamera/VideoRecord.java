@@ -87,7 +87,7 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
     private Size previewSize;
     private long mRecordingStartTime;
     private TextView mRecordingTimeView;
-    private String mVideoKey, mSettingsKey;
+    private String mVideoKey, mSettingsKey, mCaptureKey;
     private Uri mVideoUri;
 
     private CameraBase mCameraBase;
@@ -98,13 +98,14 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
 
     public VideoRecord(CameraBase cameraBase, String videoKey, String cameraId,
             AutoFitTextureView textureView, Activity activity, TextView recordingView,
-            String settingsKey) {
+            String settingsKey, String captureKey) {
         mCameraBase = cameraBase;
         mTextureView = textureView;
         mActivity = activity;
         mVideoKey = videoKey;
         mCameraId = cameraId;
         mSettingsKey = settingsKey;
+        mCaptureKey = captureKey;
         previewSize = SIZE_720P;
         mRecordingTimeView  = recordingView;
         mRecordingTimeCountsDown = false;
@@ -224,9 +225,11 @@ public class VideoRecord implements MediaRecorder.OnErrorListener, MediaRecorder
             int quality = SettingsPrefUtil.getFromSetting(videoQuality);
 
             mProfile = CamcorderProfile.get(0, quality);
-
             mDimensions = new Size(mProfile.videoFrameWidth, mProfile.videoFrameHeight);
 
+        } else {
+            mDimensions = SettingsPrefUtil.sizeFromSettingString(
+                    settings.getString(mCaptureKey,"1280x720"));
         }
 
         return mDimensions;
