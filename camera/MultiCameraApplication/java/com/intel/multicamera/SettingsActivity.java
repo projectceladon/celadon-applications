@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.multicamera;
+package com.intel.AdvancedMultiCamera;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;

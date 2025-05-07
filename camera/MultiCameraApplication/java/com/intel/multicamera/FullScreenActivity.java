@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.multicamera;
+package com.intel.AdvancedMultiCamera;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,7 +55,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 
-import static com.intel.multicamera.MultiViewActivity.updateStorageSpace;
+import static com.intel.AdvancedMultiCamera.MultiViewActivity.updateStorageSpace;
 
 public class FullScreenActivity extends AppCompatActivity {
     private static final String TAG = "FullScreenActivity";
@@ -95,7 +95,7 @@ public class FullScreenActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_full_screen);
-
+        Log.i("TAG", "fullscreen is called.");
         mIsRecordingVideo = false;
         mCameraInst = MultiCamera.getInstance();
         mCameraSwitch = findViewById(R.id.camera_switch);
@@ -209,6 +209,7 @@ public class FullScreenActivity extends AppCompatActivity {
                 bundle.putString("pref_resolution", "pref_resolution");
                 bundle.putString("video_list", "video_list");
                 bundle.putString("capture_list", "capture_list");
+                bundle.putString("advanced_list", "advanced_list");
 
                 Fragment = new SettingsPrefUtil();
                 Fragment.setArguments(bundle);

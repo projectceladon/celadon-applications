@@ -9,12 +9,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.intel.multicamera.AutoFitTextureView
+    <com.intel.AdvancedMultiCamera.AutoFitTextureView
         android:id="@+id/textureview2"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.intel.multicamera.RoundedThumbnailView
+    <com.intel.AdvancedMultiCamera.RoundedThumbnailView
         android:id="@+id/rounded_thumbnail_view1"
         android:layout_width="146dp"
         android:layout_height="198dp"
