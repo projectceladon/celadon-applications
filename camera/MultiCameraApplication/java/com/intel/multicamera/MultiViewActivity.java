@@ -73,6 +73,8 @@ public class MultiViewActivity extends AppCompatActivity {
     private int isDialogShown;
 
     private boolean isSwitchingActivity = false;
+    private boolean isUsbReceiverRegistered = false;
+
     private SettingsPrefUtil Fragment, Fragment1, Fragment2, Fragment3;
 
     public String[] CameraIds;
@@ -181,6 +183,7 @@ public class MultiViewActivity extends AppCompatActivity {
                 }
             };
             registerReceiver(mUsbReceiver , filter);
+            isUsbReceiverRegistered = true;
         } catch (Exception e) {
             //there is race condition when camera connection app is trying to open during that
             // time is camera is disconnect suddently then its trying to access non exist device
@@ -333,7 +336,10 @@ public class MultiViewActivity extends AppCompatActivity {
                  ic_camera.setOpenCameraId(0);
                  closeCamera();
                  ic_camera.setIsCameraOrSurveillance(0);
-                 unregisterReceiver(mUsbReceiver);
+                 if(isUsbReceiverRegistered) {
+                     unregisterReceiver(mUsbReceiver);
+                     isUsbReceiverRegistered = false;
+                 }
                  isSwitchingActivity = true;
                  Intent intent = new Intent(MultiViewActivity.this, SingleCameraActivity.class);
                  intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -380,7 +386,10 @@ public class MultiViewActivity extends AppCompatActivity {
                 ic_camera.setOpenCameraId(1);
                 closeCamera();
                 ic_camera.setIsCameraOrSurveillance(0);
-                unregisterReceiver(mUsbReceiver);
+                if(isUsbReceiverRegistered) {
+                    unregisterReceiver(mUsbReceiver);
+                    isUsbReceiverRegistered = false;
+                }
                 isSwitchingActivity = true;
                 Intent intent = new Intent(MultiViewActivity.this, SingleCameraActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -427,7 +436,10 @@ public class MultiViewActivity extends AppCompatActivity {
             public void onClick(View v) {
                 ic_camera.setOpenCameraId(2);
                 closeCamera();
-                unregisterReceiver(mUsbReceiver);
+                if(isUsbReceiverRegistered) {
+                    unregisterReceiver(mUsbReceiver);
+                    isUsbReceiverRegistered = false;
+                }
                 isSwitchingActivity = true;
                 Intent intent = new Intent(MultiViewActivity.this, SingleCameraActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -476,7 +488,10 @@ public class MultiViewActivity extends AppCompatActivity {
             public void onClick(View v) {
                 ic_camera.setOpenCameraId(3);
                 closeCamera();
-                unregisterReceiver(mUsbReceiver);
+		if(isUsbReceiverRegistered) {
+                    unregisterReceiver(mUsbReceiver);
+                    isUsbReceiverRegistered = false;
+                }
                 isSwitchingActivity = true;
                 Intent intent = new Intent(MultiViewActivity.this, SingleCameraActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -1302,7 +1317,10 @@ public class MultiViewActivity extends AppCompatActivity {
         }
 
         closeCamera();
-        unregisterReceiver(mUsbReceiver);
+        if(isUsbReceiverRegistered) {
+            unregisterReceiver(mUsbReceiver);
+            isUsbReceiverRegistered = false;
+        }
         isSwitchingActivity = true;
         Intent intent = new Intent(MultiViewActivity.this, SingleCameraActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
