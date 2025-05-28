@@ -455,7 +455,5 @@ public class FullScreenActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "onStop");
-        if(isSwitchingActivity == false && numOfCameras > 2)
-            System.exit(0);
-        }
     }
+}
