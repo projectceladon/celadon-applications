@@ -707,8 +707,6 @@ public class MultiViewActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "onStop");
-	if(isSwitchingActivity == false)
-	System.exit(0);
     }
 
     public void settingView(View view) {
